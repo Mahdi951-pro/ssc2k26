@@ -1,6 +1,6 @@
 import { Message } from "@/hooks/useMessages";
 import { UserAvatar } from "./UserAvatar";
-import { Check, CheckCheck, Reply, Smile, Trash2, Forward, MoreVertical } from "lucide-react";
+import { CheckCheck, Reply, Smile, Trash2, Forward, MoreVertical, Flag, Ban } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import {
@@ -10,6 +10,9 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { PollCard } from "./PollCard";
+import { ReportDialog } from "./ReportDialog";
+import { useBlocks } from "@/hooks/useBlocks";
 
 interface Props {
   message: Message;
@@ -22,6 +25,8 @@ interface Props {
   onDelete: (m: Message, forEveryone: boolean) => void;
   onForward: (m: Message) => void;
 }
+
+const POLL_TAG = /__poll__:([0-9a-f-]{36})/i;
 
 const QUICK_REACTIONS = ["❤️", "👍", "😂", "😮", "😢", "🔥"];
 
