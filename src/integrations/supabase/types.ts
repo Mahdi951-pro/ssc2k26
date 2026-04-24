@@ -14,16 +14,398 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      conversation_members: {
+        Row: {
+          conversation_id: string
+          id: string
+          is_admin: boolean | null
+          is_muted: boolean | null
+          is_pinned: boolean | null
+          joined_at: string
+          last_read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          id?: string
+          is_admin?: boolean | null
+          is_muted?: boolean | null
+          is_pinned?: boolean | null
+          joined_at?: string
+          last_read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          id?: string
+          is_admin?: boolean | null
+          is_muted?: boolean | null
+          is_pinned?: boolean | null
+          joined_at?: string
+          last_read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_members_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_default: boolean | null
+          last_message_at: string | null
+          name: string | null
+          type: Database["public"]["Enums"]["conversation_type"]
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          last_message_at?: string | null
+          name?: string | null
+          type?: Database["public"]["Enums"]["conversation_type"]
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          last_message_at?: string | null
+          name?: string | null
+          type?: Database["public"]["Enums"]["conversation_type"]
+        }
+        Relationships: []
+      }
+      message_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_reads: {
+        Row: {
+          id: string
+          message_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          message_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          message_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reads_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string | null
+          conversation_id: string
+          created_at: string
+          deleted_for_everyone: boolean | null
+          deleted_for_users: string[] | null
+          edited_at: string | null
+          forwarded_from: string | null
+          id: string
+          media_url: string | null
+          reply_to: string | null
+          sender_id: string
+          type: Database["public"]["Enums"]["message_type"]
+        }
+        Insert: {
+          content?: string | null
+          conversation_id: string
+          created_at?: string
+          deleted_for_everyone?: boolean | null
+          deleted_for_users?: string[] | null
+          edited_at?: string | null
+          forwarded_from?: string | null
+          id?: string
+          media_url?: string | null
+          reply_to?: string | null
+          sender_id: string
+          type?: Database["public"]["Enums"]["message_type"]
+        }
+        Update: {
+          content?: string | null
+          conversation_id?: string
+          created_at?: string
+          deleted_for_everyone?: boolean | null
+          deleted_for_users?: string[] | null
+          edited_at?: string | null
+          forwarded_from?: string | null
+          id?: string
+          media_url?: string | null
+          reply_to?: string | null
+          sender_id?: string
+          type?: Database["public"]["Enums"]["message_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_forwarded_from_fkey"
+            columns: ["forwarded_from"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          badges: string[] | null
+          bio: string | null
+          class_name: string | null
+          created_at: string
+          display_name: string
+          id: string
+          is_online: boolean | null
+          last_seen: string | null
+          privacy_show_online: boolean | null
+          privacy_show_seen: boolean | null
+          section: string | null
+          status_message: string | null
+          theme: string | null
+          updated_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          badges?: string[] | null
+          bio?: string | null
+          class_name?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_online?: boolean | null
+          last_seen?: string | null
+          privacy_show_online?: boolean | null
+          privacy_show_seen?: boolean | null
+          section?: string | null
+          status_message?: string | null
+          theme?: string | null
+          updated_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          badges?: string[] | null
+          bio?: string | null
+          class_name?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_online?: boolean | null
+          last_seen?: string | null
+          privacy_show_online?: boolean | null
+          privacy_show_seen?: boolean | null
+          section?: string | null
+          status_message?: string | null
+          theme?: string | null
+          updated_at?: string
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string | null
+          reason: string
+          reported_user_id: string | null
+          reporter_id: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          reason: string
+          reported_user_id?: string | null
+          reporter_id: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          reason?: string
+          reported_user_id?: string | null
+          reporter_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      typing_indicators: {
+        Row: {
+          conversation_id: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "typing_indicators_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_blocks: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_member: { Args: { _conv: string; _user: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
+      conversation_type: "direct" | "group" | "announcement"
+      message_type: "text" | "image" | "file" | "voice" | "system"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +532,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+      conversation_type: ["direct", "group", "announcement"],
+      message_type: ["text", "image", "file", "voice", "system"],
+    },
   },
 } as const
