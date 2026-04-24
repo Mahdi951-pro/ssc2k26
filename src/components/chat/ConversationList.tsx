@@ -248,7 +248,7 @@ function NewChatDialog({ onCreated }: { onCreated: () => void }) {
                 onClick={() => startDM(p.user_id)}
                 className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-accent/10"
               >
-                <UserAvatar name={p.display_name} url={p.avatar_url} online={p.is_online} showStatus size={40} />
+                <UserAvatar name={p.display_name} url={p.avatar_url} online={!!p.is_online} showStatus size={40} />
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">{p.display_name}</div>
                   <div className="text-xs text-muted-foreground">
