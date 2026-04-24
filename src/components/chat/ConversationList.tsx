@@ -147,7 +147,7 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
 function NewChatDialog({ onCreated }: { onCreated: () => void }) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  const [people, setPeople] = useState<{ user_id: string; display_name: string; avatar_url: string | null; is_online: boolean }[]>([]);
+  const [people, setPeople] = useState<{ user_id: string; display_name: string; avatar_url: string | null; is_online: boolean | null }[]>([]);
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState("");
 
