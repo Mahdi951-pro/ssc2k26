@@ -219,6 +219,92 @@ export type Database = {
           },
         ]
       }
+      poll_votes: {
+        Row: {
+          created_at: string
+          id: string
+          option_index: number
+          poll_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          option_index: number
+          poll_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          option_index?: number
+          poll_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poll_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      polls: {
+        Row: {
+          closes_at: string | null
+          conversation_id: string
+          created_at: string
+          created_by: string
+          id: string
+          is_anonymous: boolean
+          message_id: string | null
+          multi_choice: boolean
+          options: Json
+          question: string
+        }
+        Insert: {
+          closes_at?: string | null
+          conversation_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          is_anonymous?: boolean
+          message_id?: string | null
+          multi_choice?: boolean
+          options: Json
+          question: string
+        }
+        Update: {
+          closes_at?: string | null
+          conversation_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_anonymous?: boolean
+          message_id?: string | null
+          multi_choice?: boolean
+          options?: Json
+          question?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "polls_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "polls_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
