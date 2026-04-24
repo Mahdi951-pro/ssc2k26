@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { gsap } from "gsap";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -31,15 +33,39 @@ const signInSchema = z.object({
   password: z.string().min(1, "Password required").max(72),
 });
 
+function GoogleIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.24 1.4-1.7 4.1-5.5 4.1-3.3 0-6-2.7-6-6.1 0-3.4 2.7-6.1 6-6.1 1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.7 3.3 14.6 2.4 12 2.4 6.7 2.4 2.4 6.7 2.4 12s4.3 9.6 9.6 9.6c5.5 0 9.2-3.9 9.2-9.4 0-.6-.07-1.1-.16-1.6H12z" />
+    </svg>
+  );
+}
+
 function AuthPage() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [forgot, setForgot] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!loading && user) navigate({ to: "/chat" });
   }, [user, loading, navigate]);
+
+  useEffect(() => {
+    if (!cardRef.current) return;
+    const ctx = gsap.context(() => {
+      gsap.from("[data-anim]", {
+        opacity: 0,
+        y: 20,
+        scale: 0.97,
+        duration: 0.7,
+        stagger: 0.05,
+        ease: "power3.out",
+      });
+    }, cardRef);
+    return () => ctx.revert();
+  }, [forgot]);
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -64,7 +90,7 @@ function AuthPage() {
     });
     setBusy(false);
     if (error) toast.error(error.message);
-    else toast.success("Welcome to SSC 2k26! 🎉");
+    else toast.success("Welcome to SSC 2k26! 🎉 Check your email to confirm.");
   };
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -85,6 +111,22 @@ function AuthPage() {
     else toast.success("Welcome back!");
   };
 
+  const handleGoogle = async () => {
+    setBusy(true);
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: `${window.location.origin}/chat`,
+    });
+    if (result.error) {
+      setBusy(false);
+      toast.error(result.error.message || "Google sign-in failed");
+      return;
+    }
+    if (!result.redirected) {
+      // already signed in (tokens returned)
+      navigate({ to: "/chat" });
+    }
+  };
+
   const handleForgot = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
@@ -103,26 +145,19 @@ function AuthPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-10">
-      <div
-        className="absolute inset-0 -z-10 opacity-30"
-        style={{
-          background:
-            "radial-gradient(ellipse at top left, var(--primary-glow), transparent 60%), radial-gradient(ellipse at bottom right, var(--accent), transparent 60%)",
-        }}
-      />
-      <div className="w-full max-w-md">
-        <Link to="/" className="mb-6 flex items-center justify-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-brand shadow-elegant">
+    <div className="aurora relative flex min-h-[100dvh] items-center justify-center overflow-hidden bg-background px-4 py-10">
+      <div ref={cardRef} className="relative z-10 w-full max-w-md">
+        <Link to="/" data-anim className="mb-6 flex items-center justify-center gap-2">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-brand shadow-elegant">
             <MessageCircle className="h-5 w-5 text-primary-foreground" />
           </div>
           <span className="text-xl font-bold tracking-tight">SSC 2k26 Chat</span>
         </Link>
 
-        <div className="rounded-2xl border border-border bg-card/80 p-6 shadow-elegant backdrop-blur-xl">
+        <div data-anim className="glass-strong rounded-3xl p-7">
           {forgot ? (
             <>
-              <h1 className="text-2xl font-bold">Reset password</h1>
+              <h1 className="text-2xl font-bold tracking-tight">Reset password</h1>
               <p className="mt-1 text-sm text-muted-foreground">
                 We'll email you a reset link.
               </p>
@@ -131,7 +166,7 @@ function AuthPage() {
                   <Label htmlFor="forgot-email">Email</Label>
                   <Input id="forgot-email" name="email" type="email" required autoComplete="email" />
                 </div>
-                <Button type="submit" disabled={busy} className="w-full bg-gradient-brand text-primary-foreground">
+                <Button type="submit" disabled={busy} className="w-full bg-gradient-brand text-primary-foreground shadow-elegant">
                   {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Send reset link
                 </Button>
@@ -146,12 +181,31 @@ function AuthPage() {
             </>
           ) : (
             <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Sign in</TabsTrigger>
-                <TabsTrigger value="signup">Create account</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 rounded-full bg-muted/50 p-1">
+                <TabsTrigger value="signin" className="rounded-full">Sign in</TabsTrigger>
+                <TabsTrigger value="signup" className="rounded-full">Create account</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="signin" className="mt-5 space-y-4">
+              {/* Google button */}
+              <Button
+                type="button"
+                onClick={handleGoogle}
+                disabled={busy}
+                variant="outline"
+                className="mt-5 w-full gap-2 rounded-2xl border-border/60 bg-background/60 backdrop-blur transition-transform hover:scale-[1.01]"
+                size="lg"
+              >
+                <GoogleIcon className="h-5 w-5" />
+                Continue with Google
+              </Button>
+
+              <div className="my-4 flex items-center gap-3">
+                <div className="h-px flex-1 bg-border/60" />
+                <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">or</span>
+                <div className="h-px flex-1 bg-border/60" />
+              </div>
+
+              <TabsContent value="signin" className="space-y-4">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="si-email">Email</Label>
@@ -177,7 +231,7 @@ function AuthPage() {
                 </form>
               </TabsContent>
 
-              <TabsContent value="signup" className="mt-5 space-y-4">
+              <TabsContent value="signup" className="space-y-4">
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="su-name">Your name</Label>
@@ -202,7 +256,7 @@ function AuthPage() {
           )}
         </div>
 
-        <p className="mt-4 text-center text-xs text-muted-foreground">
+        <p data-anim className="mt-4 text-center text-xs text-muted-foreground">
           By continuing you agree to chat respectfully with your batchmates.
         </p>
       </div>
