@@ -11,28 +11,24 @@ export function useBlocks() {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    supabase
-      .from("user_blocks")
-      .select("blocked_id")
-      .eq("blocker_id", user.id)
-      .then(({ data }) => {
-        if (!cancelled) setBlocked(new Set((data ?? []).map((d) => d.blocked_id)));
-      });
+    const load = async () => {
+      const { data } = await supabase
+        .from("user_blocks")
+        .select("blocked_id")
+        .eq("blocker_id", user.id);
+      if (!cancelled) setBlocked(new Set((data ?? []).map((d) => d.blocked_id)));
+    };
+    load();
 
-    const ch = supabase
-      .channel(`blocks-${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "user_blocks", filter: `blocker_id=eq.${user.id}` },
-        async () => {
-          const { data } = await supabase
-            .from("user_blocks")
-            .select("blocked_id")
-            .eq("blocker_id", user.id);
-          setBlocked(new Set((data ?? []).map((d) => d.blocked_id)));
-        }
-      )
-      .subscribe();
+    const ch = supabase.channel(`blocks-${user.id}-${Math.random().toString(36).slice(2)}`);
+    ch.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "user_blocks", filter: `blocker_id=eq.${user.id}` },
+      () => {
+        load();
+      }
+    ).subscribe();
+
     return () => {
       cancelled = true;
       supabase.removeChannel(ch);
