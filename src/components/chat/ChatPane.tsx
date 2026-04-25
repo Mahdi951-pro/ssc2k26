@@ -140,9 +140,9 @@ export function ChatPane({ conversation, onBack }: Props) {
   let lastSender: string | null = null;
 
   return (
-    <section className="flex h-full flex-1 flex-col bg-background">
+    <section className="aurora flex h-full flex-1 flex-col">
       {/* Header */}
-      <header className="flex items-center gap-3 border-b border-border bg-card/80 px-3 py-2.5 backdrop-blur-md sm:px-4">
+      <header className="glass-thin relative z-10 flex items-center gap-3 px-3 py-2.5 sm:px-4">
         <button
           onClick={onBack}
           className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent/10 md:hidden"
@@ -176,11 +176,7 @@ export function ChatPane({ conversation, onBack }: Props) {
       {/* Messages */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto py-4"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at 25% 30%, color-mix(in oklab, var(--primary) 6%, transparent) 0, transparent 40%), radial-gradient(circle at 75% 70%, color-mix(in oklab, var(--accent) 6%, transparent) 0, transparent 40%)",
-        }}
+        className="relative z-10 flex-1 overflow-y-auto py-4"
       >
         {loading ? (
           <div className="flex items-center justify-center py-10">
@@ -243,6 +239,8 @@ export function ChatPane({ conversation, onBack }: Props) {
       </div>
 
       <MessageComposer
+        conversationId={conversation.id}
+        isGroup={isGroup}
         onSend={send}
         onTyping={sendTyping}
         replyTo={replyTo}
