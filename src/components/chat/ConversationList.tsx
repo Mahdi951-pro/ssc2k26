@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { Conversation, useConversations } from "@/hooks/useConversations";
 import { ConversationItem } from "./ConversationItem";
 import { Input } from "@/components/ui/input";
-import { Search, MessageCircle, Plus, Settings, LogOut, Moon, Sun, Users, Loader2 } from "lucide-react";
+import { Search, MessageCircle, Plus, Settings, LogOut, Moon, Sun, Users, Loader2, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { UserAvatar } from "./UserAvatar";
+import { Link } from "@tanstack/react-router";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +32,7 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
   const [query, setQuery] = useState("");
   const { theme, setTheme } = useTheme();
   const [profile, setProfile] = useState<{ display_name: string; avatar_url: string | null } | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -40,6 +42,13 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
       .eq("user_id", user.id)
       .maybeSingle()
       .then(({ data }) => setProfile(data));
+    supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle()
+      .then(({ data }) => setIsAdmin(!!data));
   }, [user]);
 
   const filtered = conversations.filter((c) => {
@@ -51,10 +60,10 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
 
   return (
     <aside
-      className={`flex h-full flex-col border-r border-sidebar-border bg-sidebar ${className}`}
+      className={`glass-thin flex h-full flex-col border-r border-sidebar-border ${className}`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 border-b border-sidebar-border px-4 py-3">
+      <div className="flex items-center justify-between gap-2 border-b border-sidebar-border/50 px-4 py-3">
         <button
           type="button"
           onClick={onOpenProfile}
@@ -87,6 +96,13 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
               <DropdownMenuItem onClick={onOpenProfile}>
                 Profile settings
               </DropdownMenuItem>
+              {isAdmin && (
+                <DropdownMenuItem asChild>
+                  <Link to="/admin" className="flex w-full items-center">
+                    <Shield className="mr-2 h-4 w-4" /> Admin dashboard
+                  </Link>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={async () => {

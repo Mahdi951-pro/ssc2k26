@@ -1,8 +1,8 @@
 import { Message } from "@/hooks/useMessages";
 import { UserAvatar } from "./UserAvatar";
-import { CheckCheck, Reply, Smile, Trash2, Forward, MoreVertical, Flag, Ban } from "lucide-react";
+import { CheckCheck, Reply, Smile, Trash2, Forward, MoreVertical, Flag, Ban, Play, Pause, Download } from "lucide-react";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +27,6 @@ interface Props {
 }
 
 const POLL_TAG = /__poll__:([0-9a-f-]{36})/i;
-
 const QUICK_REACTIONS = ["❤️", "👍", "😂", "😮", "😢", "🔥"];
 
 export function MessageBubble({
@@ -42,10 +41,27 @@ export function MessageBubble({
   onForward,
 }: Props) {
   const [showReactions, setShowReactions] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const { isBlocked, block } = useBlocks();
 
+  const blockedSender = !isMine && isBlocked(message.sender_id);
   const isDeleted = message.deleted_for_everyone;
   const isHidden = (message.deleted_for_users || []).includes(currentUserId);
   if (isHidden) return null;
+  if (blockedSender)
+    return (
+      <div className="px-4 py-1 text-center text-[11px] italic text-muted-foreground">
+        Message from blocked user hidden
+      </div>
+    );
+
+  // Detect embedded poll tag in text content
+  const pollMatch = message.content?.match(POLL_TAG);
+  const pollId = pollMatch?.[1] ?? null;
+  const cleanedContent = useMemo(
+    () => (message.content || "").replace(POLL_TAG, "").replace(/^📊 Poll:\s*/i, "").trim(),
+    [message.content]
+  );
 
   // group reactions
   const reactionMap = new Map<string, number>();
@@ -84,7 +100,7 @@ export function MessageBubble({
             className={`relative rounded-2xl px-3 py-2 shadow-bubble ${
               isMine
                 ? "rounded-br-md bg-bubble-out text-bubble-out-foreground"
-                : "rounded-bl-md bg-bubble-in text-bubble-in-foreground"
+                : "rounded-bl-md bg-bubble-in text-bubble-in-foreground backdrop-blur-md"
             }`}
           >
             {message.reply_message && (
@@ -103,15 +119,33 @@ export function MessageBubble({
             {isDeleted ? (
               <p className="text-sm italic opacity-60">🚫 This message was deleted</p>
             ) : message.type === "image" && message.media_url ? (
-              <img
-                src={message.media_url}
-                alt="attachment"
-                className="max-h-72 rounded-lg object-cover"
-              />
+              <a href={message.media_url} target="_blank" rel="noreferrer">
+                <img
+                  src={message.media_url}
+                  alt="attachment"
+                  className="max-h-72 rounded-lg object-cover"
+                />
+              </a>
+            ) : message.type === "voice" && message.media_url ? (
+              <VoicePlayer url={message.media_url} mine={isMine} />
+            ) : message.type === "file" && message.media_url ? (
+              <a
+                href={message.media_url}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 rounded-lg bg-black/10 px-2 py-1.5 text-sm hover:bg-black/15"
+              >
+                <Download className="h-4 w-4" />
+                <span className="line-clamp-1">{message.content || "File"}</span>
+              </a>
+            ) : pollId ? (
+              <PollCard pollId={pollId} />
             ) : (
-              <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
-                {message.content}
-              </p>
+              cleanedContent && (
+                <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+                  {cleanedContent}
+                </p>
+              )
             )}
 
             <div
@@ -120,9 +154,7 @@ export function MessageBubble({
               }`}
             >
               <span>{format(new Date(message.created_at), "HH:mm")}</span>
-              {isMine && !isDeleted && (
-                <CheckCheck className="h-3 w-3" />
-              )}
+              {isMine && !isDeleted && <CheckCheck className="h-3 w-3" />}
             </div>
           </div>
 
@@ -131,7 +163,7 @@ export function MessageBubble({
             <div
               className={`absolute -top-3 ${
                 isMine ? "left-0" : "right-0"
-              } flex translate-y-1 items-center gap-0.5 rounded-full border border-border bg-popover p-0.5 opacity-0 shadow-elegant transition-all group-hover:translate-y-0 group-hover:opacity-100`}
+              } flex translate-y-1 items-center gap-0.5 rounded-full border border-border bg-popover/90 p-0.5 opacity-0 shadow-elegant backdrop-blur-md transition-all group-hover:translate-y-0 group-hover:opacity-100`}
             >
               <button
                 type="button"
@@ -157,8 +189,19 @@ export function MessageBubble({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align={isMine ? "end" : "start"} className="z-50">
                   <DropdownMenuItem onClick={() => onForward(message)}>
-                    <Forward className="mr-2 h-4 w-4" /> Forward
+                    <Forward className="mr-2 h-4 w-4" /> Copy / Forward
                   </DropdownMenuItem>
+                  {!isMine && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setReportOpen(true)}>
+                        <Flag className="mr-2 h-4 w-4" /> Report message
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => block(message.sender_id)}>
+                        <Ban className="mr-2 h-4 w-4" /> Block user
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => onDelete(message, false)}>
                     <Trash2 className="mr-2 h-4 w-4" /> Delete for me
@@ -179,7 +222,7 @@ export function MessageBubble({
           {/* Reaction picker */}
           {showReactions && (
             <div
-              className={`absolute z-20 mt-1 flex gap-1 rounded-full border border-border bg-popover p-1 shadow-elegant ${
+              className={`absolute z-20 mt-1 flex gap-1 rounded-full border border-border bg-popover/90 p-1 shadow-elegant backdrop-blur-md ${
                 isMine ? "right-0" : "left-0"
               }`}
             >
@@ -220,6 +263,75 @@ export function MessageBubble({
           </div>
         )}
       </div>
+      <ReportDialog
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        messageId={message.id}
+        reportedUserId={message.sender_id}
+      />
     </div>
   );
+}
+
+function VoicePlayer({ url, mine }: { url: string; mine: boolean }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [progress, setProgress] = useState(0);
+
+  const toggle = () => {
+    const a = audioRef.current;
+    if (!a) return;
+    if (playing) a.pause();
+    else a.play();
+  };
+
+  return (
+    <div className="flex items-center gap-2 py-0.5">
+      <button
+        type="button"
+        onClick={toggle}
+        className={`flex h-9 w-9 items-center justify-center rounded-full ${
+          mine ? "bg-black/15" : "bg-primary/15"
+        } transition-transform hover:scale-105`}
+        aria-label={playing ? "Pause" : "Play"}
+      >
+        {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 translate-x-0.5" />}
+      </button>
+      <div className="flex flex-col gap-1">
+        <div className="h-1.5 w-40 overflow-hidden rounded-full bg-black/15">
+          <div
+            className="h-full rounded-full bg-gradient-brand transition-all"
+            style={{ width: `${duration ? (progress / duration) * 100 : 0}%` }}
+          />
+        </div>
+        <span className="text-[10px] opacity-70">
+          {formatTime(playing ? progress : duration || progress)}
+        </span>
+      </div>
+      <audio
+        ref={audioRef}
+        src={url}
+        preload="metadata"
+        onLoadedMetadata={(e) => {
+          const d = (e.currentTarget as HTMLAudioElement).duration;
+          if (Number.isFinite(d)) setDuration(d);
+        }}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => {
+          setPlaying(false);
+          setProgress(0);
+        }}
+        onTimeUpdate={(e) => setProgress((e.currentTarget as HTMLAudioElement).currentTime)}
+      />
+    </div>
+  );
+}
+
+function formatTime(sec: number) {
+  if (!Number.isFinite(sec) || sec < 0) sec = 0;
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
