@@ -10,6 +10,7 @@ import { ArrowLeft, Megaphone, Users, Loader2, MessageCircle } from "lucide-reac
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, isSameDay } from "date-fns";
+import { useBlocks } from "@/hooks/useBlocks";
 
 interface Props {
   conversation: Conversation | null;
@@ -34,6 +35,7 @@ export function ChatPane({ conversation, onBack }: Props) {
   const { user } = useAuth();
   const { messages, loading } = useMessages(conversation?.id, user?.id);
   const { typingUsers, sendTyping } = useTyping(conversation?.id, user?.id);
+  const { isBlocked, block } = useBlocks();
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const isAnnouncement = conversation?.type === "announcement";
@@ -59,12 +61,6 @@ export function ChatPane({ conversation, onBack }: Props) {
     });
     if (error) toast.error(error.message);
     else setReplyTo(null);
-
-    // bump last_message_at
-    await supabase
-      .from("conversations")
-      .update({ last_message_at: new Date().toISOString() })
-      .eq("id", conversation.id);
   };
 
   const react = async (msg: Message, emoji: string) => {
@@ -218,6 +214,8 @@ export function ChatPane({ conversation, onBack }: Props) {
                     onReact={react}
                     onDelete={del}
                     onForward={forward}
+                    isBlocked={isBlocked}
+                    onBlock={block}
                   />
                 </div>
               );
