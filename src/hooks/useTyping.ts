@@ -5,11 +5,26 @@ export function useTyping(conversationId: string | undefined, currentUserId: str
   const [typingUsers, setTypingUsers] = useState<{ user_id: string; name: string }[]>([]);
   const lastSent = useRef(0);
 
+  const loadTypingUsers = useCallback(async () => {
+    if (!conversationId) return;
+    const cutoff = new Date(Date.now() - 4000).toISOString();
+    const { data } = await supabase
+      .from("typing_indicators")
+      .select("user_id, profiles!inner(display_name)")
+      .eq("conversation_id", conversationId)
+      .gte("updated_at", cutoff);
+    setTypingUsers(
+      (data || [])
+        .filter((d: any) => d.user_id !== currentUserId)
+        .map((d: any) => ({ user_id: d.user_id, name: d.profiles?.display_name || "Someone" }))
+    );
+  }, [conversationId, currentUserId]);
+
   // Subscribe
   useEffect(() => {
     if (!conversationId) return;
     const ch = supabase
-      .channel(`typing-${conversationId}`)
+      .channel(`typing-${conversationId}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         {
@@ -18,33 +33,21 @@ export function useTyping(conversationId: string | undefined, currentUserId: str
           table: "typing_indicators",
           filter: `conversation_id=eq.${conversationId}`,
         },
-        async () => {
-          const cutoff = new Date(Date.now() - 4000).toISOString();
-          const { data } = await supabase
-            .from("typing_indicators")
-            .select("user_id, profiles!inner(display_name)")
-            .eq("conversation_id", conversationId)
-            .gte("updated_at", cutoff);
-          setTypingUsers(
-            (data || [])
-              .filter((d: any) => d.user_id !== currentUserId)
-              .map((d: any) => ({ user_id: d.user_id, name: d.profiles?.display_name || "Someone" }))
-          );
-        }
+        loadTypingUsers
       )
       .subscribe();
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [conversationId, currentUserId]);
+  }, [conversationId, loadTypingUsers]);
 
   // Auto-clear stale
   useEffect(() => {
     const i = setInterval(() => {
-      setTypingUsers((prev) => prev.filter(() => true)); // trigger react
+      loadTypingUsers();
     }, 2000);
     return () => clearInterval(i);
-  }, []);
+  }, [loadTypingUsers]);
 
   const sendTyping = useCallback(async () => {
     if (!conversationId || !currentUserId) return;
