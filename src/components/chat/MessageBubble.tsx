@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PollCard } from "./PollCard";
 import { ReportDialog } from "./ReportDialog";
-import { useBlocks } from "@/hooks/useBlocks";
 
 interface Props {
   message: Message;
@@ -24,6 +23,8 @@ interface Props {
   onReact: (m: Message, emoji: string) => void;
   onDelete: (m: Message, forEveryone: boolean) => void;
   onForward: (m: Message) => void;
+  isBlocked?: (id: string) => boolean;
+  onBlock?: (id: string) => void;
 }
 
 const POLL_TAG = /__poll__:([0-9a-f-]{36})/i;
@@ -39,10 +40,18 @@ export function MessageBubble({
   onReact,
   onDelete,
   onForward,
+  isBlocked = () => false,
+  onBlock,
 }: Props) {
   const [showReactions, setShowReactions] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
-  const { isBlocked, block } = useBlocks();
+
+  const pollMatch = message.content?.match(POLL_TAG);
+  const pollId = pollMatch?.[1] ?? null;
+  const cleanedContent = useMemo(
+    () => (message.content || "").replace(POLL_TAG, "").replace(/^📊 Poll:\s*/i, "").trim(),
+    [message.content]
+  );
 
   const blockedSender = !isMine && isBlocked(message.sender_id);
   const isDeleted = message.deleted_for_everyone;
@@ -54,14 +63,6 @@ export function MessageBubble({
         Message from blocked user hidden
       </div>
     );
-
-  // Detect embedded poll tag in text content
-  const pollMatch = message.content?.match(POLL_TAG);
-  const pollId = pollMatch?.[1] ?? null;
-  const cleanedContent = useMemo(
-    () => (message.content || "").replace(POLL_TAG, "").replace(/^📊 Poll:\s*/i, "").trim(),
-    [message.content]
-  );
 
   // group reactions
   const reactionMap = new Map<string, number>();
@@ -197,7 +198,7 @@ export function MessageBubble({
                       <DropdownMenuItem onClick={() => setReportOpen(true)}>
                         <Flag className="mr-2 h-4 w-4" /> Report message
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => block(message.sender_id)}>
+                      <DropdownMenuItem onClick={() => onBlock?.(message.sender_id)}>
                         <Ban className="mr-2 h-4 w-4" /> Block user
                       </DropdownMenuItem>
                     </>
