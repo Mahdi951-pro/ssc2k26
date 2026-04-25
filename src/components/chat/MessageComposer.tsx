@@ -99,10 +99,6 @@ export function MessageComposer({
         media_url: url,
       });
       if (insErr) throw insErr;
-      await supabase
-        .from("conversations")
-        .update({ last_message_at: new Date().toISOString() })
-        .eq("id", conversationId);
     } catch (e: any) {
       toast.error(e.message || "Upload failed");
     } finally {
@@ -179,10 +175,6 @@ export function MessageComposer({
         media_url: url,
       });
       if (insErr) throw insErr;
-      await supabase
-        .from("conversations")
-        .update({ last_message_at: new Date().toISOString() })
-        .eq("id", conversationId);
     } catch (e: any) {
       toast.error(e.message || "Voice upload failed");
     } finally {
