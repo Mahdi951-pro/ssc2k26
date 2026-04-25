@@ -23,6 +23,7 @@ export interface Message {
 export function useMessages(conversationId: string | undefined, currentUserId: string | undefined) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const loadSeq = useRef(0);
   const profilesCache = useRef<Map<string, { display_name: string; avatar_url: string | null }>>(
     new Map()
   );
@@ -66,25 +67,33 @@ export function useMessages(conversationId: string | undefined, currentUserId: s
   );
 
   const load = useCallback(async () => {
-    if (!conversationId) return;
+    if (!conversationId) {
+      setMessages([]);
+      setLoading(false);
+      return;
+    }
+    const seq = ++loadSeq.current;
     setLoading(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("messages")
       .select("*")
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: true })
       .limit(200);
+    if (seq !== loadSeq.current) return;
+    if (error) {
+      setMessages([]);
+      setLoading(false);
+      return;
+    }
     const enriched = await enrich((data ?? []) as Message[]);
+    if (seq !== loadSeq.current) return;
     setMessages(enriched);
     setLoading(false);
 
     // Mark read
     if (currentUserId) {
-      await supabase
-        .from("conversation_members")
-        .update({ last_read_at: new Date().toISOString() })
-        .eq("conversation_id", conversationId)
-        .eq("user_id", currentUserId);
+      await (supabase.rpc as any)("mark_conversation_read", { _conversation: conversationId });
     }
   }, [conversationId, enrich, currentUserId]);
 
@@ -97,7 +106,7 @@ export function useMessages(conversationId: string | undefined, currentUserId: s
   useEffect(() => {
     if (!conversationId) return;
     const ch = supabase
-      .channel(`msgs-${conversationId}`)
+      .channel(`msgs-${conversationId}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         {
@@ -111,11 +120,7 @@ export function useMessages(conversationId: string | undefined, currentUserId: s
           const [enriched] = await enrich([m]);
           setMessages((prev) => (prev.some((p) => p.id === m.id) ? prev : [...prev, enriched]));
           if (currentUserId && m.sender_id !== currentUserId) {
-            await supabase
-              .from("conversation_members")
-              .update({ last_read_at: new Date().toISOString() })
-              .eq("conversation_id", conversationId)
-              .eq("user_id", currentUserId);
+            await (supabase.rpc as any)("mark_conversation_read", { _conversation: conversationId });
           }
         }
       )
