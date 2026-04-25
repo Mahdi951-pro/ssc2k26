@@ -203,20 +203,12 @@ function NewChatDialog({ onCreated }: { onCreated: () => void }) {
 
       let convId = existing;
       if (!convId) {
-        const { data: newConv, error } = await supabase
-          .from("conversations")
-          .insert({ type: "direct", created_by: user.id })
-          .select()
-          .single();
+        const { data: rpcId, error } = await supabase.rpc(
+          "get_or_create_direct_conversation",
+          { _other: otherId }
+        );
         if (error) throw error;
-        convId = newConv!.id;
-        const { error: memErr } = await supabase
-          .from("conversation_members")
-          .insert([
-            { conversation_id: convId, user_id: user.id },
-            { conversation_id: convId, user_id: otherId },
-          ]);
-        if (memErr) throw memErr;
+        convId = rpcId as unknown as string;
       }
 
       onCreated();
