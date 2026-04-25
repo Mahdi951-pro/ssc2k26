@@ -35,7 +35,11 @@ export function useConversations(userId: string | undefined) {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    if (!userId) return;
+    if (!userId) {
+      setConversations([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
 
     // Fetch memberships joined with conversations
@@ -113,8 +117,11 @@ export function useConversations(userId: string | undefined) {
   useEffect(() => {
     if (!userId) return;
     const ch = supabase
-      .channel(`conv-list-${userId}`)
+      .channel(`conv-list-${userId}-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
+        load();
+      })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "conversation_members", filter: `user_id=eq.${userId}` }, () => {
         load();
       })
       .subscribe();

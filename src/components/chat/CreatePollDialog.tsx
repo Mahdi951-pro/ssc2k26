@@ -49,17 +49,18 @@ export function CreatePollDialog({ conversationId, trigger }: Props) {
       return;
     }
 
-    // Post a system message linking to the poll so it appears in the chat thread
-    await supabase.from("messages").insert({
+    // Post a message linking to the poll so it appears in the chat thread
+    const { error: messageError } = await supabase.from("messages").insert({
       conversation_id: conversationId,
       sender_id: user.id,
       type: "text",
       content: `📊 Poll: ${q}\n__poll__:${poll.id}`,
     });
-    await supabase
-      .from("conversations")
-      .update({ last_message_at: new Date().toISOString() })
-      .eq("id", conversationId);
+    if (messageError) {
+      setBusy(false);
+      toast.error(messageError.message);
+      return;
+    }
 
     setBusy(false);
     setOpen(false);

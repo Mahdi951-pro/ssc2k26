@@ -76,7 +76,12 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
           </div>
         </button>
         <div className="flex items-center gap-0.5">
-          <NewChatDialog onCreated={refresh} />
+          <NewChatDialog
+            onCreated={(conversation) => {
+              refresh();
+              onSelect(conversation);
+            }}
+          />
           <Button
             variant="ghost"
             size="icon"
@@ -160,7 +165,7 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
   );
 }
 
-function NewChatDialog({ onCreated }: { onCreated: () => void }) {
+function NewChatDialog({ onCreated }: { onCreated: (conversation: Conversation) => void }) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [people, setPeople] = useState<{ user_id: string; display_name: string; avatar_url: string | null; is_online: boolean | null }[]>([]);
@@ -182,36 +187,39 @@ function NewChatDialog({ onCreated }: { onCreated: () => void }) {
     if (!user) return;
     setBusy(true);
     try {
-      // Check existing
-      const { data: mine } = await supabase
-        .from("conversation_members")
-        .select("conversation_id, conversations!inner(type)")
-        .eq("user_id", user.id);
-      const myDirectIds = (mine || [])
-        .filter((m: any) => m.conversations?.type === "direct")
-        .map((m: any) => m.conversation_id);
+      const other = people.find((p) => p.user_id === otherId);
+      const { data: rpcId, error } = await supabase.rpc(
+        "get_or_create_direct_conversation",
+        { _other: otherId }
+      );
+      if (error) throw error;
+      const convId = rpcId as unknown as string;
+      const { data: convRow, error: convError } = await supabase
+        .from("conversations")
+        .select("id, type, name, description, avatar_url, last_message_at, is_default")
+        .eq("id", convId)
+        .single();
+      if (convError || !convRow) throw convError || new Error("Could not open chat");
 
-      let existing: string | null = null;
-      if (myDirectIds.length) {
-        const { data: shared } = await supabase
-          .from("conversation_members")
-          .select("conversation_id")
-          .in("conversation_id", myDirectIds)
-          .eq("user_id", otherId);
-        existing = shared?.[0]?.conversation_id || null;
-      }
-
-      let convId = existing;
-      if (!convId) {
-        const { data: rpcId, error } = await supabase.rpc(
-          "get_or_create_direct_conversation",
-          { _other: otherId }
-        );
-        if (error) throw error;
-        convId = rpcId as unknown as string;
-      }
-
-      onCreated();
+      onCreated({
+        ...(convRow as Conversation),
+        is_pinned: false,
+        is_muted: false,
+        last_read_at: new Date().toISOString(),
+        other_member: other
+          ? {
+              user_id: other.user_id,
+              display_name: other.display_name,
+              username: null,
+              avatar_url: other.avatar_url,
+              is_online: !!other.is_online,
+              last_seen: null,
+              bio: null,
+              badges: null,
+              privacy_show_online: true,
+            }
+          : null,
+      });
       setOpen(false);
       toast.success("Chat opened");
     } catch (e: any) {

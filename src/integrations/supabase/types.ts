@@ -491,6 +491,10 @@ export type Database = {
         Returns: boolean
       }
       is_member: { Args: { _conv: string; _user: string }; Returns: boolean }
+      mark_conversation_read: {
+        Args: { _conversation: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
