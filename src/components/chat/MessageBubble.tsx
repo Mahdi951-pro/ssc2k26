@@ -1,5 +1,6 @@
 import { Message } from "@/hooks/useMessages";
 import { UserAvatar } from "./UserAvatar";
+import { VerifiedBadge } from "./VerifiedBadge";
 import { CheckCheck, Reply, Smile, Trash2, Forward, MoreVertical, Flag, Ban, Play, Pause, Download } from "lucide-react";
 import { format } from "date-fns";
 import { useMemo, useRef, useState } from "react";
