@@ -63,7 +63,9 @@ export type Database = {
           description: string | null
           id: string
           is_default: boolean | null
+          is_section_locked: boolean
           last_message_at: string | null
+          locked_section: string | null
           name: string | null
           type: Database["public"]["Enums"]["conversation_type"]
         }
@@ -74,7 +76,9 @@ export type Database = {
           description?: string | null
           id?: string
           is_default?: boolean | null
+          is_section_locked?: boolean
           last_message_at?: string | null
+          locked_section?: string | null
           name?: string | null
           type?: Database["public"]["Enums"]["conversation_type"]
         }
@@ -85,7 +89,9 @@ export type Database = {
           description?: string | null
           id?: string
           is_default?: boolean | null
+          is_section_locked?: boolean
           last_message_at?: string | null
+          locked_section?: string | null
           name?: string | null
           type?: Database["public"]["Enums"]["conversation_type"]
         }
@@ -483,6 +489,7 @@ export type Database = {
         Args: { _other: string }
         Returns: string
       }
+      get_user_section: { Args: { _user: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

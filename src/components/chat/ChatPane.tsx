@@ -6,7 +6,8 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { MessageBubble } from "./MessageBubble";
 import { MessageComposer } from "./MessageComposer";
 import { UserAvatar } from "./UserAvatar";
-import { ArrowLeft, Megaphone, Users, Loader2, MessageCircle } from "lucide-react";
+import { VerifiedBadge } from "./VerifiedBadge";
+import { ArrowLeft, Megaphone, Users, Loader2, MessageCircle, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, isSameDay } from "date-fns";
@@ -160,7 +161,16 @@ export function ChatPane({ conversation, onBack }: Props) {
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <div className="truncate font-semibold">{name}</div>
+          <div className="flex items-center gap-1 truncate font-semibold">
+            <span className="truncate">{name}</span>
+            {conversation.type === "direct" &&
+              conversation.other_member?.badges?.some(
+                (b) => b === "verified" || b === "admin"
+              ) && <VerifiedBadge size={14} />}
+            {(conversation as any).is_section_locked && (
+              <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+            )}
+          </div>
           <div className="truncate text-xs text-muted-foreground">
             {typingUsers.length > 0
               ? `${typingUsers.map((t) => t.name).join(", ")} typing…`

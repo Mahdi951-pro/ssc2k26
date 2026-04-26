@@ -1,5 +1,6 @@
 import { Message } from "@/hooks/useMessages";
 import { UserAvatar } from "./UserAvatar";
+import { VerifiedBadge } from "./VerifiedBadge";
 import { CheckCheck, Reply, Smile, Trash2, Forward, MoreVertical, Flag, Ban, Play, Pause, Download } from "lucide-react";
 import { format } from "date-fns";
 import { useMemo, useRef, useState } from "react";
@@ -92,8 +93,11 @@ export function MessageBubble({
       )}
       <div className={`flex max-w-[85%] flex-col sm:max-w-[70%] ${isMine ? "items-end" : "items-start"}`}>
         {showSender && !isMine && isGroup && (
-          <span className="mb-0.5 ml-3 text-[11px] font-semibold text-primary">
+          <span className="mb-0.5 ml-3 inline-flex items-center gap-1 text-[11px] font-semibold text-primary">
             {message.sender?.display_name}
+            {message.sender?.badges?.some((b) => b === "verified" || b === "admin") && (
+              <VerifiedBadge size={12} />
+            )}
           </span>
         )}
         <div className="relative">

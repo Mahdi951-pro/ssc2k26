@@ -15,7 +15,7 @@ export interface Message {
   created_at: string;
   edited_at: string | null;
   // joined
-  sender?: { display_name: string; avatar_url: string | null } | null;
+  sender?: { display_name: string; avatar_url: string | null; badges?: string[] | null } | null;
   reactions?: { emoji: string; user_id: string }[];
   reply_message?: { content: string | null; sender_id: string } | null;
 }
@@ -24,18 +24,18 @@ export function useMessages(conversationId: string | undefined, currentUserId: s
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const loadSeq = useRef(0);
-  const profilesCache = useRef<Map<string, { display_name: string; avatar_url: string | null }>>(
-    new Map()
-  );
+  const profilesCache = useRef<
+    Map<string, { display_name: string; avatar_url: string | null; badges: string[] | null }>
+  >(new Map());
 
   const fetchProfile = useCallback(async (uid: string) => {
     if (profilesCache.current.has(uid)) return profilesCache.current.get(uid)!;
     const { data } = await supabase
       .from("profiles")
-      .select("display_name, avatar_url")
+      .select("display_name, avatar_url, badges")
       .eq("user_id", uid)
       .maybeSingle();
-    const p = data ?? { display_name: "Unknown", avatar_url: null };
+    const p = data ?? { display_name: "Unknown", avatar_url: null, badges: null };
     profilesCache.current.set(uid, p);
     return p;
   }, []);
