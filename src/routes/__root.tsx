@@ -2,6 +2,7 @@ import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/r
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
+import { SplashScreen } from "@/components/SplashScreen";
 
 import appCss from "../styles.css?url";
 
@@ -42,8 +43,16 @@ export const Route = createRootRoute({
       { property: "og:title", content: "SSC 2k26 Chat" },
       { property: "og:description", content: "The official chat hub for SSC 2026 batch students." },
       { property: "og:type", content: "website" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: "SSC'26" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/icon-192.png" },
+      { rel: "icon", type: "image/png", sizes: "512x512", href: "/icon-512.png" },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -68,6 +77,7 @@ function RootComponent() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <SplashScreen />
         <Outlet />
         <Toaster position="top-center" />
       </AuthProvider>
