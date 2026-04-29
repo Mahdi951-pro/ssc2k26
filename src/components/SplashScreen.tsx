@@ -6,14 +6,14 @@ import { useEffect, useState } from "react";
  * the user on every route change but greets them beautifully on app open.
  */
 export function SplashScreen() {
-  const [visible, setVisible] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return !sessionStorage.getItem("ssc26_splash_shown");
-  });
+  // Always start hidden to match SSR; reveal on client only if not yet shown.
+  const [visible, setVisible] = useState(false);
   const [fading, setFading] = useState(false);
 
   useEffect(() => {
-    if (!visible) return;
+    if (typeof window === "undefined") return;
+    if (sessionStorage.getItem("ssc26_splash_shown")) return;
+    setVisible(true);
     const fadeTimer = setTimeout(() => setFading(true), 2400);
     const doneTimer = setTimeout(() => {
       sessionStorage.setItem("ssc26_splash_shown", "1");
@@ -23,7 +23,7 @@ export function SplashScreen() {
       clearTimeout(fadeTimer);
       clearTimeout(doneTimer);
     };
-  }, [visible]);
+  }, []);
 
   if (!visible) return null;
 
