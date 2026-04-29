@@ -78,6 +78,33 @@ export function StoryViewer({ groups, initialGroupIndex, onClose, onMarkSeen, on
     if (isMine) loadViewers(story.id);
   }, [story?.id, isMine, onMarkSeen, loadReactions, loadViewers]);
 
+  // Realtime: refresh reactions/viewers as they come in
+  useEffect(() => {
+    if (!story) return;
+    const sid = story.id;
+    const ch = supabase
+      .channel(`story-${sid}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "story_reactions", filter: `story_id=eq.${sid}` },
+        () => {
+          loadReactions(sid);
+          if (isMine) loadViewers(sid);
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "story_views", filter: `story_id=eq.${sid}` },
+        () => {
+          if (isMine) loadViewers(sid);
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [story?.id, isMine, loadReactions, loadViewers]);
+
   useEffect(() => {
     if (paused || !story) return;
     const start = Date.now();
