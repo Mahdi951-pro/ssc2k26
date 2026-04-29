@@ -2,11 +2,15 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Shield, ArrowLeft, Users, MessageSquare, Flag, BarChart3, Trash2, Check } from "lucide-react";
+import { Loader2, Shield, ArrowLeft, Users, MessageSquare, Flag, BarChart3, Trash2, Check, Megaphone, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { UsersTab } from "@/components/admin/UsersTab";
+import { ActiveUsersTab } from "@/components/admin/ActiveUsersTab";
+import { AnalyticsTab } from "@/components/admin/AnalyticsTab";
+import { AnnouncementsTab } from "@/components/admin/AnnouncementsTab";
 
 export const Route = createFileRoute("/admin")({
   component: AdminRoute,
@@ -191,28 +195,45 @@ function AdminRoute() {
           />
         </section>
 
-        {/* Reports */}
-        <Tabs defaultValue="pending" className="glass rounded-2xl p-4">
-          <TabsList>
-            <TabsTrigger value="pending">Pending</TabsTrigger>
-            <TabsTrigger value="all">All reports</TabsTrigger>
+        {/* Tabs */}
+        <Tabs defaultValue="reports" className="glass rounded-2xl p-4">
+          <TabsList className="flex flex-wrap">
+            <TabsTrigger value="reports"><Flag className="mr-1 h-3.5 w-3.5" /> Reports</TabsTrigger>
+            <TabsTrigger value="announcements"><Megaphone className="mr-1 h-3.5 w-3.5" /> Broadcasts</TabsTrigger>
+            <TabsTrigger value="users"><Users className="mr-1 h-3.5 w-3.5" /> Users</TabsTrigger>
+            <TabsTrigger value="active"><Activity className="mr-1 h-3.5 w-3.5" /> Active</TabsTrigger>
+            <TabsTrigger value="analytics"><BarChart3 className="mr-1 h-3.5 w-3.5" /> Analytics</TabsTrigger>
           </TabsList>
-          <TabsContent value="pending">
-            <ReportList
-              rows={reports.filter((r) => r.status === "pending")}
-              onResolve={resolveReport}
-              onDeleteMessage={deleteMessage}
-              busy={busy}
-            />
+
+          <TabsContent value="reports">
+            <Tabs defaultValue="pending" className="mt-2">
+              <TabsList>
+                <TabsTrigger value="pending">Pending</TabsTrigger>
+                <TabsTrigger value="all">All reports</TabsTrigger>
+              </TabsList>
+              <TabsContent value="pending">
+                <ReportList
+                  rows={reports.filter((r) => r.status === "pending")}
+                  onResolve={resolveReport}
+                  onDeleteMessage={deleteMessage}
+                  busy={busy}
+                />
+              </TabsContent>
+              <TabsContent value="all">
+                <ReportList
+                  rows={reports}
+                  onResolve={resolveReport}
+                  onDeleteMessage={deleteMessage}
+                  busy={busy}
+                />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
-          <TabsContent value="all">
-            <ReportList
-              rows={reports}
-              onResolve={resolveReport}
-              onDeleteMessage={deleteMessage}
-              busy={busy}
-            />
-          </TabsContent>
+
+          <TabsContent value="announcements"><AnnouncementsTab /></TabsContent>
+          <TabsContent value="users"><UsersTab /></TabsContent>
+          <TabsContent value="active"><ActiveUsersTab /></TabsContent>
+          <TabsContent value="analytics"><AnalyticsTab /></TabsContent>
         </Tabs>
       </div>
     </main>

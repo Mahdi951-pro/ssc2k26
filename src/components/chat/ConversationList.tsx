@@ -18,6 +18,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { StoriesBar } from "@/components/stories/StoriesBar";
+import { BroadcastBanner } from "@/components/stories/BroadcastBanner";
 
 interface Props {
   selectedId: string | null;
@@ -122,6 +124,12 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Broadcasts */}
+      <BroadcastBanner />
+
+      {/* Stories */}
+      <StoriesBar />
 
       {/* Search */}
       <div className="border-b border-sidebar-border p-3">
