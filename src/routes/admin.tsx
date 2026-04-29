@@ -2,11 +2,15 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Shield, ArrowLeft, Users, MessageSquare, Flag, BarChart3, Trash2, Check } from "lucide-react";
+import { Loader2, Shield, ArrowLeft, Users, MessageSquare, Flag, BarChart3, Trash2, Check, Megaphone, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { UsersTab } from "@/components/admin/UsersTab";
+import { ActiveUsersTab } from "@/components/admin/ActiveUsersTab";
+import { AnalyticsTab } from "@/components/admin/AnalyticsTab";
+import { AnnouncementsTab } from "@/components/admin/AnnouncementsTab";
 
 export const Route = createFileRoute("/admin")({
   component: AdminRoute,
