@@ -24,34 +24,59 @@ export function StoryViewer({ groups, initialGroupIndex, onClose, onMarkSeen, on
   const [si, setSi] = useState(0);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [viewers, setViewers] = useState<{ display_name: string; avatar_url: string | null }[]>([]);
+  const [viewers, setViewers] = useState<
+    { user_id: string; display_name: string; avatar_url: string | null; emoji: string | null }[]
+  >([]);
+  const [reactions, setReactions] = useState<{ user_id: string; emoji: string }[]>([]);
   const [showViewers, setShowViewers] = useState(false);
+  const [flash, setFlash] = useState<string | null>(null);
   const timer = useRef<number | null>(null);
 
   const group = groups[gi];
   const story: Story | undefined = group?.stories[si];
   const isMine = story?.author_id === user?.id;
 
+  const loadReactions = useCallback(async (storyId: string) => {
+    const { data } = await supabase
+      .from("story_reactions")
+      .select("user_id, emoji")
+      .eq("story_id", storyId);
+    setReactions(data ?? []);
+  }, []);
+
+  const loadViewers = useCallback(async (storyId: string) => {
+    const { data: views } = await supabase
+      .from("story_views")
+      .select("viewer_id")
+      .eq("story_id", storyId);
+    if (!views || views.length === 0) {
+      setViewers([]);
+      return;
+    }
+    const ids = views.map((v: any) => v.viewer_id);
+    const [{ data: profs }, { data: rxs }] = await Promise.all([
+      supabase.from("profiles").select("user_id, display_name, avatar_url").in("user_id", ids),
+      supabase.from("story_reactions").select("user_id, emoji").eq("story_id", storyId),
+    ]);
+    const rxMap = new Map((rxs ?? []).map((r: any) => [r.user_id, r.emoji]));
+    setViewers(
+      (profs ?? []).map((p: any) => ({
+        user_id: p.user_id,
+        display_name: p.display_name,
+        avatar_url: p.avatar_url,
+        emoji: rxMap.get(p.user_id) ?? null,
+      }))
+    );
+  }, []);
+
   useEffect(() => {
     if (!story) return;
     onMarkSeen(story.id);
     setProgress(0);
     setShowViewers(false);
-    if (isMine) {
-      supabase
-        .from("story_views")
-        .select("viewer_id, viewed_at")
-        .eq("story_id", story.id)
-        .then(async ({ data }) => {
-          if (!data || data.length === 0) { setViewers([]); return; }
-          const { data: profs } = await supabase
-            .from("profiles")
-            .select("user_id, display_name, avatar_url")
-            .in("user_id", data.map((v: any) => v.viewer_id));
-          setViewers((profs ?? []).map((p: any) => ({ display_name: p.display_name, avatar_url: p.avatar_url })));
-        });
-    }
-  }, [story?.id, isMine, onMarkSeen]);
+    loadReactions(story.id);
+    if (isMine) loadViewers(story.id);
+  }, [story?.id, isMine, onMarkSeen, loadReactions, loadViewers]);
 
   useEffect(() => {
     if (paused || !story) return;
@@ -82,15 +107,39 @@ export function StoryViewer({ groups, initialGroupIndex, onClose, onMarkSeen, on
   const react = async (emoji: string) => {
     if (!user || !story) return;
     setPaused(true);
-    const { error } = await supabase
-      .from("story_reactions")
-      .insert({ story_id: story.id, user_id: user.id, emoji });
-    if (error && !error.message.includes("duplicate")) {
-      toast.error(error.message);
+    const existing = reactions.find((r) => r.user_id === user.id);
+
+    if (existing && existing.emoji === emoji) {
+      // toggle off
+      const { error } = await supabase
+        .from("story_reactions")
+        .delete()
+        .eq("story_id", story.id)
+        .eq("user_id", user.id)
+        .eq("emoji", emoji);
+      if (error) toast.error(error.message);
+      else setReactions((r) => r.filter((x) => !(x.user_id === user.id && x.emoji === emoji)));
     } else {
-      toast.success(`Reacted ${emoji}`);
+      // remove old, insert new
+      if (existing) {
+        await supabase
+          .from("story_reactions")
+          .delete()
+          .eq("story_id", story.id)
+          .eq("user_id", user.id);
+      }
+      const { error } = await supabase
+        .from("story_reactions")
+        .insert({ story_id: story.id, user_id: user.id, emoji });
+      if (error) {
+        toast.error(error.message);
+      } else {
+        setReactions((r) => [...r.filter((x) => x.user_id !== user.id), { user_id: user.id, emoji }]);
+        setFlash(emoji);
+        setTimeout(() => setFlash(null), 700);
+      }
     }
-    setTimeout(() => setPaused(false), 800);
+    setTimeout(() => setPaused(false), 600);
   };
 
   const remove = async () => {
