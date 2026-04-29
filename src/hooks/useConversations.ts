@@ -57,6 +57,35 @@ export function useConversations(userId: string | undefined) {
 
     const convs: Conversation[] = [];
 
+    // Pre-collect direct conversation ids so we can batch other-member lookups
+    const directIds = (memberships as any[])
+      .filter((m) => m.conversations?.type === "direct")
+      .map((m) => m.conversation_id);
+
+    // Pull every member of every direct conversation in one go (RLS allows it
+    // because the user is a member). Then batch-fetch their profiles.
+    const otherByConv = new Map<string, string>();
+    if (directIds.length) {
+      const { data: rows } = await supabase
+        .from("conversation_members")
+        .select("conversation_id, user_id")
+        .in("conversation_id", directIds)
+        .neq("user_id", userId);
+      (rows ?? []).forEach((r: any) => {
+        if (!otherByConv.has(r.conversation_id)) otherByConv.set(r.conversation_id, r.user_id);
+      });
+    }
+
+    const otherIds = Array.from(new Set(Array.from(otherByConv.values())));
+    const profileMap = new Map<string, Profile>();
+    if (otherIds.length) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, username, avatar_url, is_online, last_seen, bio, badges, privacy_show_online")
+        .in("user_id", otherIds);
+      (profs ?? []).forEach((p: any) => profileMap.set(p.user_id, p as Profile));
+    }
+
     for (const m of memberships as any[]) {
       const c = m.conversations;
       if (!c) continue;
@@ -68,13 +97,8 @@ export function useConversations(userId: string | undefined) {
       };
 
       if (c.type === "direct") {
-        const { data: others } = await supabase
-          .from("conversation_members")
-          .select("user_id, profiles!inner(user_id, display_name, username, avatar_url, is_online, last_seen, bio, badges, privacy_show_online)")
-          .eq("conversation_id", c.id)
-          .neq("user_id", userId)
-          .limit(1);
-        conv.other_member = (others?.[0] as any)?.profiles ?? null;
+        const otherId = otherByConv.get(c.id);
+        conv.other_member = otherId ? profileMap.get(otherId) ?? null : null;
       }
 
       // last message
