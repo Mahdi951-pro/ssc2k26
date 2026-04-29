@@ -1,10 +1,10 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { StoryGroup, Story } from "@/hooks/useStories";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { X, ChevronLeft, ChevronRight, Heart, Eye, Trash2 } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Eye, Trash2, Heart } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 
