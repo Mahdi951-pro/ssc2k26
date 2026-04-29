@@ -253,40 +253,95 @@ export function StoryViewer({ groups, initialGroupIndex, onClose, onMarkSeen, on
           </button>
         </div>
 
+        {/* Floating reaction flash */}
+        {flash && (
+          <div
+            className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center"
+            aria-hidden
+          >
+            <span className="animate-ping text-7xl drop-shadow-2xl">{flash}</span>
+          </div>
+        )}
+
         {/* Bottom actions */}
-        <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/80 to-transparent p-4">
+        <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-4 pt-10">
           {isMine ? (
             <button
               onClick={() => setShowViewers((s) => !s)}
-              className="flex items-center gap-1.5 text-sm text-white"
+              className="flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-sm text-white backdrop-blur transition hover:bg-white/25"
             >
-              <Eye className="h-4 w-4" /> {viewers.length} {viewers.length === 1 ? "view" : "views"}
+              <Eye className="h-4 w-4" />
+              <span className="font-semibold">{viewers.length}</span>
+              <span className="text-white/80">{viewers.length === 1 ? "view" : "views"}</span>
+              {reactions.length > 0 && (
+                <>
+                  <span className="mx-1 h-3 w-px bg-white/30" />
+                  <Heart className="h-3.5 w-3.5 fill-rose-400 text-rose-400" />
+                  <span className="font-semibold">{reactions.length}</span>
+                </>
+              )}
             </button>
           ) : (
-            <div className="flex justify-center gap-2">
-              {REACTIONS.map((e) => (
-                <button
-                  key={e}
-                  onClick={() => react(e)}
-                  className="text-2xl transition-transform hover:scale-125 active:scale-150"
-                >
-                  {e}
-                </button>
-              ))}
-            </div>
+            <>
+              {/* Existing reactions summary */}
+              {reactions.length > 0 && (
+                <div className="mb-2 flex justify-center gap-1">
+                  {Object.entries(
+                    reactions.reduce<Record<string, number>>((acc, r) => {
+                      acc[r.emoji] = (acc[r.emoji] || 0) + 1;
+                      return acc;
+                    }, {})
+                  ).map(([e, n]) => (
+                    <span
+                      key={e}
+                      className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-xs text-white backdrop-blur"
+                    >
+                      <span>{e}</span>
+                      <span className="font-semibold">{n}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="flex justify-center gap-1.5 rounded-full bg-white/10 p-1.5 backdrop-blur-md">
+                {REACTIONS.map((e) => {
+                  const mine = reactions.some((r) => r.user_id === user?.id && r.emoji === e);
+                  return (
+                    <button
+                      key={e}
+                      onClick={() => react(e)}
+                      className={`flex h-10 w-10 items-center justify-center rounded-full text-2xl transition-all hover:scale-125 active:scale-150 ${
+                        mine ? "bg-white/30 ring-2 ring-white" : ""
+                      }`}
+                    >
+                      {e}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
           )}
 
           {showViewers && isMine && (
-            <div className="mt-3 max-h-40 overflow-y-auto rounded-lg bg-white/10 p-2 backdrop-blur">
+            <div className="mt-3 max-h-60 overflow-y-auto rounded-xl bg-white/10 p-2 backdrop-blur-md">
               {viewers.length === 0 ? (
-                <p className="py-2 text-center text-xs text-white/70">No viewers yet</p>
+                <p className="py-3 text-center text-xs text-white/70">No viewers yet</p>
               ) : (
-                viewers.map((v, i) => (
-                  <div key={i} className="flex items-center gap-2 py-1.5 text-sm text-white">
-                    <div className="h-6 w-6 overflow-hidden rounded-full bg-white/20">
-                      {v.avatar_url ? <img src={v.avatar_url} alt="" className="h-full w-full object-cover" /> : null}
+                viewers.map((v) => (
+                  <div
+                    key={v.user_id}
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-white hover:bg-white/10"
+                  >
+                    <div className="h-7 w-7 overflow-hidden rounded-full bg-white/20">
+                      {v.avatar_url ? (
+                        <img src={v.avatar_url} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[10px] font-bold">
+                          {v.display_name[0]?.toUpperCase()}
+                        </div>
+                      )}
                     </div>
-                    <span>{v.display_name}</span>
+                    <span className="flex-1 truncate">{v.display_name}</span>
+                    {v.emoji && <span className="text-base">{v.emoji}</span>}
                   </div>
                 ))
               )}
