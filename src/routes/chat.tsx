@@ -5,6 +5,7 @@ import { ConversationList } from "@/components/chat/ConversationList";
 import { ChatPane } from "@/components/chat/ChatPane";
 import { ProfileDialog } from "@/components/chat/ProfileDialog";
 import { Conversation } from "@/hooks/useConversations";
+import { useNotifications } from "@/hooks/useNotifications";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/chat")({
@@ -26,6 +27,8 @@ function ChatRoute() {
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
   }, [user, loading, navigate]);
+
+  useNotifications({ userId: user?.id, activeConversationId: selected?.id ?? null });
 
   if (loading || !user) {
     return (
