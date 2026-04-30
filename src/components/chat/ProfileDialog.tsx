@@ -228,7 +228,7 @@ export function ProfileDialog({ open, onOpenChange }: Props) {
           </div>
         </div>
 
-        <div className="px-5 pb-5 pt-16">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-6 pt-16">
           {/* Identity */}
           <div className="text-center">
             <div className="flex items-center justify-center gap-1.5">
