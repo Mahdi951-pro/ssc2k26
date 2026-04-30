@@ -38,9 +38,22 @@ export function ChatPane({ conversation, onBack }: Props) {
   const { typingUsers, sendTyping } = useTyping(conversation?.id, user?.id);
   const { isBlocked, block } = useBlocks();
   const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const isAnnouncement = conversation?.type === "announcement";
   const isGroup = conversation?.type !== "direct";
+  const canPost = !isAnnouncement || isAdmin;
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle()
+      .then(({ data }) => setIsAdmin(!!data));
+  }, [user?.id]);
 
   // Auto-scroll on new messages
   useEffect(() => {
