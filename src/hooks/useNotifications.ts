@@ -25,8 +25,20 @@ interface ProfileRow {
   avatar_url: string | null;
 }
 
-const SOUND_URL =
-  "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYxLjEuMTAwAAAAAAAAAAAAAAD/+0DAAAAAAAAAAAAAAAAAAAAAAABJbmZvAAAADwAAAAMAAAGAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqr///////////////////////////////8AAAAATGF2YzYxLjMuAAAAAAAAAAAAAAAAJAQAAAAAAAABgN/u35IAAAAAAAAAAAAAAAAAAAAA//tQxAADwAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
+let workerPromise: Promise<ServiceWorkerRegistration | null> | null = null;
+
+function getNotificationWorker() {
+  if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
+    return Promise.resolve(null);
+  }
+  if (!workerPromise) {
+    workerPromise = navigator.serviceWorker
+      .register("/notification-sw.js", { scope: "/" })
+      .then((registration) => registration)
+      .catch(() => null);
+  }
+  return workerPromise;
+}
 
 function playPing() {
   try {
@@ -53,17 +65,24 @@ function playPing() {
   }
 }
 
-function showBrowserNotification(title: string, body: string, icon?: string | null) {
+async function showBrowserNotification(title: string, body: string, icon?: string | null) {
   if (typeof window === "undefined" || !("Notification" in window)) return;
   if (Notification.permission !== "granted") return;
   if (!document.hidden) return; // toast handles foreground
+  const options: NotificationOptions = {
+    body: body.slice(0, 120),
+    icon: icon || "/icon-192.png",
+    badge: "/icon-192.png",
+    tag: "ssc2k26-msg",
+    renotify: true,
+  };
+  const registration = await getNotificationWorker();
+  if (registration?.showNotification) {
+    await registration.showNotification(title, options).catch(() => {});
+    return;
+  }
   try {
-    new Notification(title, {
-      body: body.slice(0, 120),
-      icon: icon || "/icon-192.png",
-      badge: "/icon-192.png",
-      tag: "ssc2k26-msg",
-    });
+    new Notification(title, options);
   } catch {
     /* ignore */
   }
