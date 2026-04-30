@@ -99,14 +99,11 @@ export function useNotifications({ userId, activeConversationId }: Options) {
     activeRef.current = activeConversationId ?? null;
   }, [activeConversationId]);
 
-  // Ask permission once
+  // Prepare a service worker so Android Chrome can show system notifications.
   useEffect(() => {
-    if (typeof window === "undefined" || !("Notification" in window)) return;
-    if (Notification.permission === "default") {
-      // Request silently; browsers gate on user gesture but we attempt
-      Notification.requestPermission().catch(() => {});
-    }
-  }, []);
+    if (!userId) return;
+    getNotificationWorker();
+  }, [userId]);
 
   // Load memberships + conversations
   useEffect(() => {
@@ -223,6 +220,9 @@ export function useNotifications({ userId, activeConversationId }: Options) {
             case "audio":
               preview = "🎙️ Voice message";
               break;
+            case "voice":
+              preview = "🎙️ Voice message";
+              break;
             case "file":
               preview = "📎 File";
               break;
@@ -248,10 +248,12 @@ export function useNotifications({ userId, activeConversationId }: Options) {
       )
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "conversation_members", filter: `user_id=eq.${userId}` },
+        { event: "*", schema: "public", table: "conversation_members", filter: `user_id=eq.${userId}` },
         (payload) => {
-          const m = payload.new as any;
-          if (m?.conversation_id) {
+          const m = (payload.new || payload.old) as any;
+          if (payload.eventType === "DELETE" && m?.conversation_id) {
+            memberMapRef.current.delete(m.conversation_id);
+          } else if (m?.conversation_id) {
             memberMapRef.current.set(m.conversation_id, m);
           }
         }
