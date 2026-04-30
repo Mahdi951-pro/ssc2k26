@@ -25,8 +25,20 @@ interface ProfileRow {
   avatar_url: string | null;
 }
 
-const SOUND_URL =
-  "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYxLjEuMTAwAAAAAAAAAAAAAAD/+0DAAAAAAAAAAAAAAAAAAAAAAABJbmZvAAAADwAAAAMAAAGAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqr///////////////////////////////8AAAAATGF2YzYxLjMuAAAAAAAAAAAAAAAAJAQAAAAAAAABgN/u35IAAAAAAAAAAAAAAAAAAAAA//tQxAADwAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
+let workerPromise: Promise<ServiceWorkerRegistration | null> | null = null;
+
+function getNotificationWorker() {
+  if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
+    return Promise.resolve(null);
+  }
+  if (!workerPromise) {
+    workerPromise = navigator.serviceWorker
+      .register("/notification-sw.js", { scope: "/" })
+      .then((registration) => registration)
+      .catch(() => null);
+  }
+  return workerPromise;
+}
 
 function playPing() {
   try {
@@ -53,17 +65,24 @@ function playPing() {
   }
 }
 
-function showBrowserNotification(title: string, body: string, icon?: string | null) {
+async function showBrowserNotification(title: string, body: string, icon?: string | null) {
   if (typeof window === "undefined" || !("Notification" in window)) return;
   if (Notification.permission !== "granted") return;
   if (!document.hidden) return; // toast handles foreground
+  const options = {
+    body: body.slice(0, 120),
+    icon: icon || "/icon-192.png",
+    badge: "/icon-192.png",
+    tag: "ssc2k26-msg",
+    renotify: true,
+  } as NotificationOptions & { badge?: string; renotify?: boolean };
+  const registration = await getNotificationWorker();
+  if (registration?.showNotification) {
+    await registration.showNotification(title, options).catch(() => {});
+    return;
+  }
   try {
-    new Notification(title, {
-      body: body.slice(0, 120),
-      icon: icon || "/icon-192.png",
-      badge: "/icon-192.png",
-      tag: "ssc2k26-msg",
-    });
+    new Notification(title, options);
   } catch {
     /* ignore */
   }
@@ -80,14 +99,11 @@ export function useNotifications({ userId, activeConversationId }: Options) {
     activeRef.current = activeConversationId ?? null;
   }, [activeConversationId]);
 
-  // Ask permission once
+  // Prepare a service worker so Android Chrome can show system notifications.
   useEffect(() => {
-    if (typeof window === "undefined" || !("Notification" in window)) return;
-    if (Notification.permission === "default") {
-      // Request silently; browsers gate on user gesture but we attempt
-      Notification.requestPermission().catch(() => {});
-    }
-  }, []);
+    if (!userId) return;
+    getNotificationWorker();
+  }, [userId]);
 
   // Load memberships + conversations
   useEffect(() => {
@@ -204,6 +220,9 @@ export function useNotifications({ userId, activeConversationId }: Options) {
             case "audio":
               preview = "🎙️ Voice message";
               break;
+            case "voice":
+              preview = "🎙️ Voice message";
+              break;
             case "file":
               preview = "📎 File";
               break;
@@ -229,10 +248,12 @@ export function useNotifications({ userId, activeConversationId }: Options) {
       )
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "conversation_members", filter: `user_id=eq.${userId}` },
+        { event: "*", schema: "public", table: "conversation_members", filter: `user_id=eq.${userId}` },
         (payload) => {
-          const m = payload.new as any;
-          if (m?.conversation_id) {
+          const m = (payload.new || payload.old) as any;
+          if (payload.eventType === "DELETE" && m?.conversation_id) {
+            memberMapRef.current.delete(m.conversation_id);
+          } else if (m?.conversation_id) {
             memberMapRef.current.set(m.conversation_id, m);
           }
         }
