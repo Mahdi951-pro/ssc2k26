@@ -183,9 +183,9 @@ export function ProfileDialog({ open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md overflow-hidden border-border/60 bg-background/80 p-0 backdrop-blur-2xl">
+      <DialogContent className="flex max-h-[92dvh] w-[calc(100%-1rem)] max-w-md flex-col overflow-hidden border-border/60 bg-background/80 p-0 backdrop-blur-2xl sm:w-full">
         {/* Premium header / cover */}
-        <div className="relative">
+        <div className="relative shrink-0">
           <div className="h-32 bg-[radial-gradient(ellipse_at_top_left,hsl(var(--primary)/0.6),transparent_60%),radial-gradient(ellipse_at_top_right,hsl(var(--accent)/0.55),transparent_55%),linear-gradient(135deg,hsl(var(--primary)/0.35),hsl(var(--accent)/0.35))]">
             <div className="absolute inset-0 bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 viewBox=%220 0 40 40%22><circle cx=%221%22 cy=%221%22 r=%221%22 fill=%22white%22 fill-opacity=%220.08%22/></svg>')] opacity-60" />
           </div>
