@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, isSameDay } from "date-fns";
 import { useBlocks } from "@/hooks/useBlocks";
+import { Megaphone as MegaphoneIcon } from "lucide-react";
 
 interface Props {
   conversation: Conversation | null;
