@@ -69,13 +69,13 @@ async function showBrowserNotification(title: string, body: string, icon?: strin
   if (typeof window === "undefined" || !("Notification" in window)) return;
   if (Notification.permission !== "granted") return;
   if (!document.hidden) return; // toast handles foreground
-  const options: NotificationOptions = {
+  const options = {
     body: body.slice(0, 120),
     icon: icon || "/icon-192.png",
     badge: "/icon-192.png",
     tag: "ssc2k26-msg",
     renotify: true,
-  };
+  } as NotificationOptions & { badge?: string; renotify?: boolean };
   const registration = await getNotificationWorker();
   if (registration?.showNotification) {
     await registration.showNotification(title, options).catch(() => {});
