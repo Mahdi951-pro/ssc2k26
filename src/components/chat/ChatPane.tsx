@@ -34,6 +34,7 @@ function moderate(text: string) {
 
 export function ChatPane({ conversation, onBack }: Props) {
   const { user } = useAuth();
+  const userId = user?.id;
   const { messages, loading } = useMessages(conversation?.id, user?.id);
   const { typingUsers, sendTyping } = useTyping(conversation?.id, user?.id);
   const { isBlocked, block } = useBlocks();
@@ -43,17 +44,20 @@ export function ChatPane({ conversation, onBack }: Props) {
   const isAnnouncement = conversation?.type === "announcement";
   const isGroup = conversation?.type !== "direct";
   const canPost = !isAnnouncement || isAdmin;
+  const isSectionLocked = Boolean(
+    (conversation as (Conversation & { is_section_locked?: boolean }) | null)?.is_section_locked,
+  );
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle()
       .then(({ data }) => setIsAdmin(!!data));
-  }, [user?.id]);
+  }, [userId]);
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -182,7 +186,7 @@ export function ChatPane({ conversation, onBack }: Props) {
               conversation.other_member?.badges?.some((b) => b === "verified" || b === "admin") && (
                 <VerifiedBadge size={14} />
               )}
-            {(conversation as any).is_section_locked && (
+            {isSectionLocked && (
               <Lock className="h-3.5 w-3.5 text-muted-foreground" />
             )}
           </div>
