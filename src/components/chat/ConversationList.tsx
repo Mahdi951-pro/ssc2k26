@@ -172,6 +172,17 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
           </div>
         )}
       </div>
+
+      {/* Creator signature */}
+      <div className="border-t border-sidebar-border/60 px-4 py-2.5 text-center">
+        <p className="text-[10px] tracking-wide text-muted-foreground">
+          Built by{" "}
+          <span className="bg-gradient-brand bg-clip-text font-semibold text-transparent">
+            Abid
+          </span>{" "}
+          · SSC&nbsp;2k26
+        </p>
+      </div>
     </aside>
   );
 }
