@@ -111,8 +111,8 @@ export function MessageComposer({
         media_url: url,
       });
       if (insErr) throw insErr;
-    } catch (e: any) {
-      toast.error(e.message || "Upload failed");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Upload failed");
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -144,7 +144,7 @@ export function MessageComposer({
           return s + 1;
         });
       }, 1000);
-    } catch (e: any) {
+    } catch {
       toast.error("Microphone access denied");
     }
   };
@@ -187,8 +187,8 @@ export function MessageComposer({
         media_url: url,
       });
       if (insErr) throw insErr;
-    } catch (e: any) {
-      toast.error(e.message || "Voice upload failed");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Voice upload failed");
     } finally {
       setUploading(false);
     }
