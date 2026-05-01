@@ -1,5 +1,15 @@
 import { useRef, useState, FormEvent, KeyboardEvent, useEffect } from "react";
-import { Smile, Send, Mic, Paperclip, X, Reply, Image as ImageIcon, Square, BarChart3 } from "lucide-react";
+import {
+  Smile,
+  Send,
+  Mic,
+  Paperclip,
+  X,
+  Reply,
+  Image as ImageIcon,
+  Square,
+  BarChart3,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Message } from "@/hooks/useMessages";
 import EmojiPicker, { EmojiStyle, Theme } from "emoji-picker-react";
@@ -42,7 +52,9 @@ export function MessageComposer({
   const { theme } = useTheme();
   const isDark =
     theme === "dark" ||
-    (theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    (theme === "system" &&
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches);
 
   useEffect(() => {
     return () => {
@@ -257,7 +269,7 @@ export function MessageComposer({
           <button
             type="button"
             onClick={() => setShowEmoji((v) => !v)}
-             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:h-10 sm:w-10"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:h-10 sm:w-10"
             aria-label="Emoji"
           >
             <Smile className="h-5 w-5" />
@@ -266,7 +278,7 @@ export function MessageComposer({
             type="button"
             onClick={onPickFile}
             disabled={uploading}
-             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50 sm:h-10 sm:w-10"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50 sm:h-10 sm:w-10"
             aria-label="Attach"
           >
             <Paperclip className="h-5 w-5" />

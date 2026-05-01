@@ -2,7 +2,18 @@ import { useState, useEffect } from "react";
 import { Conversation, useConversations } from "@/hooks/useConversations";
 import { ConversationItem } from "./ConversationItem";
 import { Input } from "@/components/ui/input";
-import { Search, MessageCircle, Plus, Settings, LogOut, Moon, Sun, Users, Loader2, Shield } from "lucide-react";
+import {
+  Search,
+  MessageCircle,
+  Plus,
+  Settings,
+  LogOut,
+  Moon,
+  Sun,
+  Users,
+  Loader2,
+  Shield,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -17,7 +28,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { StoriesBar } from "@/components/stories/StoriesBar";
 import { BroadcastBanner } from "@/components/stories/BroadcastBanner";
 import { NotificationPrompt } from "./NotificationPrompt";
@@ -34,7 +51,10 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
   const { conversations, loading, refresh } = useConversations(user?.id);
   const [query, setQuery] = useState("");
   const { theme, setTheme } = useTheme();
-  const [profile, setProfile] = useState<{ display_name: string; avatar_url: string | null } | null>(null);
+  const [profile, setProfile] = useState<{
+    display_name: string;
+    avatar_url: string | null;
+  } | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -96,14 +116,17 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" aria-label="Menu">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-full"
+                aria-label="Menu"
+              >
                 <Settings className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="z-50">
-              <DropdownMenuItem onClick={onOpenProfile}>
-                Profile settings
-              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onOpenProfile}>Profile settings</DropdownMenuItem>
               {isAdmin && (
                 <DropdownMenuItem asChild>
                   <Link to="/admin" className="flex w-full items-center">
@@ -190,7 +213,14 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
 function NewChatDialog({ onCreated }: { onCreated: (conversation: Conversation) => void }) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  const [people, setPeople] = useState<{ user_id: string; display_name: string; avatar_url: string | null; is_online: boolean | null }[]>([]);
+  const [people, setPeople] = useState<
+    {
+      user_id: string;
+      display_name: string;
+      avatar_url: string | null;
+      is_online: boolean | null;
+    }[]
+  >([]);
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -210,10 +240,9 @@ function NewChatDialog({ onCreated }: { onCreated: (conversation: Conversation) 
     setBusy(true);
     try {
       const other = people.find((p) => p.user_id === otherId);
-      const { data: rpcId, error } = await supabase.rpc(
-        "get_or_create_direct_conversation",
-        { _other: otherId }
-      );
+      const { data: rpcId, error } = await supabase.rpc("get_or_create_direct_conversation", {
+        _other: otherId,
+      });
       if (error) throw error;
       const convId = rpcId as unknown as string;
       const { data: convRow, error: convError } = await supabase
@@ -251,8 +280,8 @@ function NewChatDialog({ onCreated }: { onCreated: (conversation: Conversation) 
     }
   };
 
-  const filtered = people.filter((p) =>
-    !search.trim() || p.display_name.toLowerCase().includes(search.toLowerCase())
+  const filtered = people.filter(
+    (p) => !search.trim() || p.display_name.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
@@ -286,7 +315,13 @@ function NewChatDialog({ onCreated }: { onCreated: (conversation: Conversation) 
                 onClick={() => startDM(p.user_id)}
                 className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-accent/10"
               >
-                <UserAvatar name={p.display_name} url={p.avatar_url} online={!!p.is_online} showStatus size={40} />
+                <UserAvatar
+                  name={p.display_name}
+                  url={p.avatar_url}
+                  online={!!p.is_online}
+                  showStatus
+                  size={40}
+                />
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">{p.display_name}</div>
                   <div className="text-xs text-muted-foreground">

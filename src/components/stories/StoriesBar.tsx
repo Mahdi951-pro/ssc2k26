@@ -41,7 +41,9 @@ export function StoriesBar() {
                   ) : (
                     <div
                       className="flex h-full w-full items-center justify-center rounded-full text-[9px] font-bold text-white"
-                      style={{ background: myGroup.stories[0].background ?? "var(--gradient-brand)" }}
+                      style={{
+                        background: myGroup.stories[0].background ?? "var(--gradient-brand)",
+                      }}
                     >
                       {myGroup.stories[0].content?.slice(0, 12) ?? "Aa"}
                     </div>
@@ -55,14 +57,19 @@ export function StoriesBar() {
             )}
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); setComposerOpen(true); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setComposerOpen(true);
+              }}
               className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground ring-2 ring-background transition hover:scale-110"
               aria-label="Post story"
             >
               <Plus className="h-3 w-3" />
             </button>
           </div>
-          <div className="w-14 truncate text-center text-[10px] font-medium sm:w-16">Your story</div>
+          <div className="w-14 truncate text-center text-[10px] font-medium sm:w-16">
+            Your story
+          </div>
         </button>
 
         {others.map((g) => {
@@ -72,12 +79,18 @@ export function StoriesBar() {
               key={g.author_id}
               type="button"
               onClick={() => setViewerIdx(idx)}
-                className="flex w-14 shrink-0 flex-col items-center gap-1 sm:w-16"
+              className="flex w-14 shrink-0 flex-col items-center gap-1 sm:w-16"
             >
-              <div className={`h-12 w-12 rounded-full p-[2px] sm:h-14 sm:w-14 ${g.hasUnseen ? "bg-gradient-brand" : "bg-muted-foreground/30"}`}>
+              <div
+                className={`h-12 w-12 rounded-full p-[2px] sm:h-14 sm:w-14 ${g.hasUnseen ? "bg-gradient-brand" : "bg-muted-foreground/30"}`}
+              >
                 <div className="h-full w-full overflow-hidden rounded-full bg-background p-[2px]">
                   {g.author_avatar ? (
-                    <img src={g.author_avatar} alt="" className="h-full w-full rounded-full object-cover" />
+                    <img
+                      src={g.author_avatar}
+                      alt=""
+                      className="h-full w-full rounded-full object-cover"
+                    />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center rounded-full bg-muted text-sm font-bold">
                       {g.author_name[0]?.toUpperCase()}
@@ -85,7 +98,9 @@ export function StoriesBar() {
                   )}
                 </div>
               </div>
-              <div className="w-14 truncate text-center text-[10px] font-medium sm:w-16">{g.author_name}</div>
+              <div className="w-14 truncate text-center text-[10px] font-medium sm:w-16">
+                {g.author_name}
+              </div>
             </button>
           );
         })}
