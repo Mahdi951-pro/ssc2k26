@@ -34,6 +34,7 @@ function moderate(text: string) {
 
 export function ChatPane({ conversation, onBack }: Props) {
   const { user } = useAuth();
+  const userId = user?.id;
   const { messages, loading } = useMessages(conversation?.id, user?.id);
   const { typingUsers, sendTyping } = useTyping(conversation?.id, user?.id);
   const { isBlocked, block } = useBlocks();
@@ -43,17 +44,20 @@ export function ChatPane({ conversation, onBack }: Props) {
   const isAnnouncement = conversation?.type === "announcement";
   const isGroup = conversation?.type !== "direct";
   const canPost = !isAnnouncement || isAdmin;
+  const isSectionLocked = Boolean(
+    (conversation as (Conversation & { is_section_locked?: boolean }) | null)?.is_section_locked,
+  );
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle()
       .then(({ data }) => setIsAdmin(!!data));
-  }, [user?.id]);
+  }, [userId]);
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -136,23 +140,25 @@ export function ChatPane({ conversation, onBack }: Props) {
     );
   }
 
-  const name = conversation.type === "direct"
-    ? conversation.other_member?.display_name || "Direct chat"
-    : conversation.name || "Group";
-  const subtitle = conversation.type === "direct"
-    ? conversation.other_member?.is_online
-      ? "online"
-      : "offline"
-    : conversation.description || (isAnnouncement ? "Announcement channel" : "Group chat");
+  const name =
+    conversation.type === "direct"
+      ? conversation.other_member?.display_name || "Direct chat"
+      : conversation.name || "Group";
+  const subtitle =
+    conversation.type === "direct"
+      ? conversation.other_member?.is_online
+        ? "online"
+        : "offline"
+      : conversation.description || (isAnnouncement ? "Announcement channel" : "Group chat");
 
   // Build day-grouped messages
   let lastDate: Date | null = null;
   let lastSender: string | null = null;
 
   return (
-    <section className="aurora flex h-full flex-1 flex-col">
+    <section className="aurora flex h-full min-h-0 flex-1 flex-col">
       {/* Header */}
-      <header className="glass-thin relative z-10 flex items-center gap-3 px-3 py-2.5 sm:px-4">
+      <header className="glass-thin relative z-10 flex shrink-0 items-center gap-3 px-3 py-2.5 sm:px-4">
         <button
           onClick={onBack}
           className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent/10 md:hidden"
@@ -177,12 +183,10 @@ export function ChatPane({ conversation, onBack }: Props) {
           <div className="flex items-center gap-1 truncate font-semibold">
             <span className="truncate">{name}</span>
             {conversation.type === "direct" &&
-              conversation.other_member?.badges?.some(
-                (b) => b === "verified" || b === "admin"
-              ) && <VerifiedBadge size={14} />}
-            {(conversation as any).is_section_locked && (
-              <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-            )}
+              conversation.other_member?.badges?.some((b) => b === "verified" || b === "admin") && (
+                <VerifiedBadge size={14} />
+              )}
+            {isSectionLocked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
           </div>
           <div className="truncate text-xs text-muted-foreground">
             {typingUsers.length > 0
@@ -193,10 +197,7 @@ export function ChatPane({ conversation, onBack }: Props) {
       </header>
 
       {/* Messages */}
-      <div
-        ref={scrollRef}
-        className="relative z-10 flex-1 overflow-y-auto py-4"
-      >
+      <div ref={scrollRef} className="relative z-10 min-h-0 flex-1 overflow-y-auto py-3 sm:py-4">
         {loading ? (
           <div className="flex items-center justify-center py-10">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -206,9 +207,7 @@ export function ChatPane({ conversation, onBack }: Props) {
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-brand shadow-elegant">
               <MessageCircle className="h-8 w-8 text-primary-foreground" />
             </div>
-            <p className="mt-4 text-sm text-muted-foreground">
-              No messages yet — say hi 👋
-            </p>
+            <p className="mt-4 text-sm text-muted-foreground">No messages yet — say hi 👋</p>
           </div>
         ) : (
           <div className="space-y-1">
@@ -247,9 +246,18 @@ export function ChatPane({ conversation, onBack }: Props) {
               <div className="px-4 py-1 text-xs text-muted-foreground">
                 <span className="inline-flex items-center gap-1">
                   <span className="flex gap-0.5">
-                    <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-muted-foreground" style={{ animationDelay: "0ms" }} />
-                    <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-muted-foreground" style={{ animationDelay: "150ms" }} />
-                    <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-muted-foreground" style={{ animationDelay: "300ms" }} />
+                    <span
+                      className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-muted-foreground"
+                      style={{ animationDelay: "0ms" }}
+                    />
+                    <span
+                      className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-muted-foreground"
+                      style={{ animationDelay: "150ms" }}
+                    />
+                    <span
+                      className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-muted-foreground"
+                      style={{ animationDelay: "300ms" }}
+                    />
                   </span>
                   {typingUsers.map((t) => t.name).join(", ")} is typing
                 </span>
@@ -269,7 +277,7 @@ export function ChatPane({ conversation, onBack }: Props) {
           onCancelReply={() => setReplyTo(null)}
         />
       ) : (
-        <div className="glass-thin flex items-center justify-center gap-2 px-4 py-3 text-xs text-muted-foreground">
+        <div className="glass-thin flex shrink-0 items-center justify-center gap-2 px-4 py-3 text-xs text-muted-foreground">
           <Megaphone className="h-3.5 w-3.5" />
           Only admins can post in this announcement channel.
         </div>

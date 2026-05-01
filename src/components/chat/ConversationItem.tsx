@@ -40,10 +40,8 @@ export function ConversationItem({ conversation, active, currentUserId, onClick 
     <button
       type="button"
       onClick={onClick}
-      className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${
-        active
-          ? "bg-sidebar-accent"
-          : "hover:bg-sidebar-accent/60"
+      className={`group flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors sm:gap-3 sm:px-3 sm:py-2.5 ${
+        active ? "bg-sidebar-accent" : "hover:bg-sidebar-accent/60"
       }`}
     >
       <div className="relative">
@@ -53,10 +51,10 @@ export function ConversationItem({ conversation, active, currentUserId, onClick 
             url={conversation.other_member?.avatar_url}
             online={conversation.other_member?.is_online}
             showStatus
-            size={46}
+            size={44}
           />
         ) : (
-          <div className="flex h-[46px] w-[46px] items-center justify-center rounded-full bg-gradient-brand text-primary-foreground">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-brand text-primary-foreground sm:h-[46px] sm:w-[46px]">
             {isAnnouncement ? <Megaphone className="h-5 w-5" /> : <Users className="h-5 w-5" />}
           </div>
         )}
@@ -66,12 +64,14 @@ export function ConversationItem({ conversation, active, currentUserId, onClick 
           <div className="flex min-w-0 items-center gap-1.5">
             <span className="truncate font-semibold text-sidebar-foreground">{name}</span>
             {conversation.is_pinned && <Pin className="h-3 w-3 shrink-0 text-muted-foreground" />}
-            {conversation.is_muted && <BellOff className="h-3 w-3 shrink-0 text-muted-foreground" />}
+            {conversation.is_muted && (
+              <BellOff className="h-3 w-3 shrink-0 text-muted-foreground" />
+            )}
           </div>
-          <span className="shrink-0 text-[11px] text-muted-foreground">{time}</span>
+          <span className="shrink-0 text-[10px] text-muted-foreground sm:text-[11px]">{time}</span>
         </div>
         <div className="flex items-center justify-between gap-2">
-          <p className="truncate text-sm text-muted-foreground">
+          <p className="truncate text-[13px] text-muted-foreground sm:text-sm">
             {isMine && lastMsg && <span className="text-muted-foreground/70">You: </span>}
             {preview}
           </p>

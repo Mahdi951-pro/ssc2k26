@@ -2,7 +2,18 @@ import { useState, useEffect } from "react";
 import { Conversation, useConversations } from "@/hooks/useConversations";
 import { ConversationItem } from "./ConversationItem";
 import { Input } from "@/components/ui/input";
-import { Search, MessageCircle, Plus, Settings, LogOut, Moon, Sun, Users, Loader2, Shield } from "lucide-react";
+import {
+  Search,
+  MessageCircle,
+  Plus,
+  Settings,
+  LogOut,
+  Moon,
+  Sun,
+  Users,
+  Loader2,
+  Shield,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -17,7 +28,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { StoriesBar } from "@/components/stories/StoriesBar";
 import { BroadcastBanner } from "@/components/stories/BroadcastBanner";
 import { NotificationPrompt } from "./NotificationPrompt";
@@ -34,7 +51,10 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
   const { conversations, loading, refresh } = useConversations(user?.id);
   const [query, setQuery] = useState("");
   const { theme, setTheme } = useTheme();
-  const [profile, setProfile] = useState<{ display_name: string; avatar_url: string | null } | null>(null);
+  const [profile, setProfile] = useState<{
+    display_name: string;
+    avatar_url: string | null;
+  } | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -63,14 +83,14 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
 
   return (
     <aside
-      className={`glass-thin flex h-full flex-col border-r border-sidebar-border ${className}`}
+      className={`glass-thin flex h-full min-h-0 flex-col border-r border-sidebar-border ${className}`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 border-b border-sidebar-border/50 px-4 py-3">
+      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-sidebar-border/50 px-3 py-2.5 sm:px-4 sm:py-3">
         <button
           type="button"
           onClick={onOpenProfile}
-          className="flex items-center gap-2 rounded-lg p-1 transition-colors hover:bg-sidebar-accent"
+          className="flex min-w-0 items-center gap-2 rounded-lg p-1 transition-colors hover:bg-sidebar-accent"
         >
           <UserAvatar name={profile?.display_name} url={profile?.avatar_url} size={36} />
           <div className="min-w-0 text-left">
@@ -78,7 +98,7 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
             <div className="text-[10px] text-muted-foreground">Online</div>
           </div>
         </button>
-        <div className="flex items-center gap-0.5">
+        <div className="flex shrink-0 items-center gap-0.5">
           <NewChatDialog
             onCreated={(conversation) => {
               refresh();
@@ -96,14 +116,17 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" aria-label="Menu">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-full"
+                aria-label="Menu"
+              >
                 <Settings className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="z-50">
-              <DropdownMenuItem onClick={onOpenProfile}>
-                Profile settings
-              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onOpenProfile}>Profile settings</DropdownMenuItem>
               {isAdmin && (
                 <DropdownMenuItem asChild>
                   <Link to="/admin" className="flex w-full items-center">
@@ -135,20 +158,20 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
       <StoriesBar />
 
       {/* Search */}
-      <div className="border-b border-sidebar-border p-3">
+      <div className="shrink-0 border-b border-sidebar-border p-2.5 sm:p-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search chats"
-            className="h-9 rounded-full border-transparent bg-sidebar-accent pl-9 focus-visible:bg-background"
+            className="h-10 rounded-full border-transparent bg-sidebar-accent pl-9 text-base focus-visible:bg-background sm:h-9 sm:text-sm"
           />
         </div>
       </div>
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className="min-h-0 flex-1 overflow-y-auto px-1.5 py-1.5 sm:p-2">
         {loading ? (
           <div className="flex items-center justify-center py-10">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -174,7 +197,7 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
       </div>
 
       {/* Creator signature */}
-      <div className="border-t border-sidebar-border/60 px-4 py-2.5 text-center">
+      <div className="shrink-0 border-t border-sidebar-border/60 px-4 py-2 text-center pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <p className="text-[10px] tracking-wide text-muted-foreground">
           Built by{" "}
           <span className="bg-gradient-brand bg-clip-text font-semibold text-transparent">
@@ -190,7 +213,14 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
 function NewChatDialog({ onCreated }: { onCreated: (conversation: Conversation) => void }) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  const [people, setPeople] = useState<{ user_id: string; display_name: string; avatar_url: string | null; is_online: boolean | null }[]>([]);
+  const [people, setPeople] = useState<
+    {
+      user_id: string;
+      display_name: string;
+      avatar_url: string | null;
+      is_online: boolean | null;
+    }[]
+  >([]);
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -210,10 +240,9 @@ function NewChatDialog({ onCreated }: { onCreated: (conversation: Conversation) 
     setBusy(true);
     try {
       const other = people.find((p) => p.user_id === otherId);
-      const { data: rpcId, error } = await supabase.rpc(
-        "get_or_create_direct_conversation",
-        { _other: otherId }
-      );
+      const { data: rpcId, error } = await supabase.rpc("get_or_create_direct_conversation", {
+        _other: otherId,
+      });
       if (error) throw error;
       const convId = rpcId as unknown as string;
       const { data: convRow, error: convError } = await supabase
@@ -244,15 +273,15 @@ function NewChatDialog({ onCreated }: { onCreated: (conversation: Conversation) 
       });
       setOpen(false);
       toast.success("Chat opened");
-    } catch (e: any) {
-      toast.error(e.message || "Could not start chat");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Could not start chat");
     } finally {
       setBusy(false);
     }
   };
 
-  const filtered = people.filter((p) =>
-    !search.trim() || p.display_name.toLowerCase().includes(search.toLowerCase())
+  const filtered = people.filter(
+    (p) => !search.trim() || p.display_name.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
@@ -286,7 +315,13 @@ function NewChatDialog({ onCreated }: { onCreated: (conversation: Conversation) 
                 onClick={() => startDM(p.user_id)}
                 className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-accent/10"
               >
-                <UserAvatar name={p.display_name} url={p.avatar_url} online={!!p.is_online} showStatus size={40} />
+                <UserAvatar
+                  name={p.display_name}
+                  url={p.avatar_url}
+                  online={!!p.is_online}
+                  showStatus
+                  size={40}
+                />
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">{p.display_name}</div>
                   <div className="text-xs text-muted-foreground">
