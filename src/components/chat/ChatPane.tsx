@@ -150,9 +150,9 @@ export function ChatPane({ conversation, onBack }: Props) {
   let lastSender: string | null = null;
 
   return (
-    <section className="aurora flex h-full flex-1 flex-col">
+    <section className="aurora flex h-full min-h-0 flex-1 flex-col">
       {/* Header */}
-      <header className="glass-thin relative z-10 flex items-center gap-3 px-3 py-2.5 sm:px-4">
+      <header className="glass-thin relative z-10 flex shrink-0 items-center gap-3 px-3 py-2.5 sm:px-4">
         <button
           onClick={onBack}
           className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent/10 md:hidden"
@@ -195,7 +195,7 @@ export function ChatPane({ conversation, onBack }: Props) {
       {/* Messages */}
       <div
         ref={scrollRef}
-        className="relative z-10 flex-1 overflow-y-auto py-4"
+        className="relative z-10 min-h-0 flex-1 overflow-y-auto py-3 sm:py-4"
       >
         {loading ? (
           <div className="flex items-center justify-center py-10">
@@ -269,7 +269,7 @@ export function ChatPane({ conversation, onBack }: Props) {
           onCancelReply={() => setReplyTo(null)}
         />
       ) : (
-        <div className="glass-thin flex items-center justify-center gap-2 px-4 py-3 text-xs text-muted-foreground">
+        <div className="glass-thin flex shrink-0 items-center justify-center gap-2 px-4 py-3 text-xs text-muted-foreground">
           <Megaphone className="h-3.5 w-3.5" />
           Only admins can post in this announcement channel.
         </div>
