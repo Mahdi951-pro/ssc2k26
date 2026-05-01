@@ -273,8 +273,8 @@ function NewChatDialog({ onCreated }: { onCreated: (conversation: Conversation) 
       });
       setOpen(false);
       toast.success("Chat opened");
-    } catch (e: any) {
-      toast.error(e.message || "Could not start chat");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Could not start chat");
     } finally {
       setBusy(false);
     }
