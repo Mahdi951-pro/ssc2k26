@@ -63,14 +63,14 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
 
   return (
     <aside
-      className={`glass-thin flex h-full flex-col border-r border-sidebar-border ${className}`}
+      className={`glass-thin flex h-full min-h-0 flex-col border-r border-sidebar-border ${className}`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 border-b border-sidebar-border/50 px-4 py-3">
+      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-sidebar-border/50 px-3 py-2.5 sm:px-4 sm:py-3">
         <button
           type="button"
           onClick={onOpenProfile}
-          className="flex items-center gap-2 rounded-lg p-1 transition-colors hover:bg-sidebar-accent"
+          className="flex min-w-0 items-center gap-2 rounded-lg p-1 transition-colors hover:bg-sidebar-accent"
         >
           <UserAvatar name={profile?.display_name} url={profile?.avatar_url} size={36} />
           <div className="min-w-0 text-left">
@@ -78,7 +78,7 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
             <div className="text-[10px] text-muted-foreground">Online</div>
           </div>
         </button>
-        <div className="flex items-center gap-0.5">
+        <div className="flex shrink-0 items-center gap-0.5">
           <NewChatDialog
             onCreated={(conversation) => {
               refresh();
@@ -135,20 +135,20 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
       <StoriesBar />
 
       {/* Search */}
-      <div className="border-b border-sidebar-border p-3">
+      <div className="shrink-0 border-b border-sidebar-border p-2.5 sm:p-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search chats"
-            className="h-9 rounded-full border-transparent bg-sidebar-accent pl-9 focus-visible:bg-background"
+            className="h-10 rounded-full border-transparent bg-sidebar-accent pl-9 text-base focus-visible:bg-background sm:h-9 sm:text-sm"
           />
         </div>
       </div>
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className="min-h-0 flex-1 overflow-y-auto px-1.5 py-1.5 sm:p-2">
         {loading ? (
           <div className="flex items-center justify-center py-10">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -174,7 +174,7 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
       </div>
 
       {/* Creator signature */}
-      <div className="border-t border-sidebar-border/60 px-4 py-2.5 text-center">
+      <div className="shrink-0 border-t border-sidebar-border/60 px-4 py-2 text-center pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <p className="text-[10px] tracking-wide text-muted-foreground">
           Built by{" "}
           <span className="bg-gradient-brand bg-clip-text font-semibold text-transparent">
