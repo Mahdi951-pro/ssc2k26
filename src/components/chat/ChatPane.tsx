@@ -186,9 +186,7 @@ export function ChatPane({ conversation, onBack }: Props) {
               conversation.other_member?.badges?.some((b) => b === "verified" || b === "admin") && (
                 <VerifiedBadge size={14} />
               )}
-            {isSectionLocked && (
-              <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-            )}
+            {isSectionLocked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
           </div>
           <div className="truncate text-xs text-muted-foreground">
             {typingUsers.length > 0
