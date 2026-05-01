@@ -39,14 +39,14 @@ function ChatRoute() {
   }
 
   return (
-    <div className="flex h-[100dvh] w-full overflow-hidden bg-background">
+    <div className="fixed inset-0 flex overflow-hidden bg-background">
       <ConversationList
         selectedId={selected?.id ?? null}
         onSelect={setSelected}
         onOpenProfile={() => setProfileOpen(true)}
         className={`w-full md:w-[340px] lg:w-[380px] ${selected ? "hidden md:flex" : "flex"}`}
       />
-      <div className={`flex-1 ${selected ? "flex" : "hidden md:flex"}`}>
+      <div className={`min-w-0 flex-1 ${selected ? "flex" : "hidden md:flex"}`}>
         <ChatPane conversation={selected} onBack={() => setSelected(null)} />
       </div>
       <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
