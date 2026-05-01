@@ -183,7 +183,7 @@ export function MessageComposer({
   };
 
   return (
-    <div className="glass-thin border-t border-border/40">
+    <div className="glass-thin shrink-0 border-t border-border/40 pb-[env(safe-area-inset-bottom)]">
       {replyTo && (
         <div className="flex items-start gap-2 border-b border-border/50 bg-muted/30 px-3 py-2 text-sm">
           <Reply className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
@@ -243,7 +243,7 @@ export function MessageComposer({
           </Button>
         </div>
       ) : (
-        <form onSubmit={submit} className="flex items-end gap-1.5 p-2 sm:p-3">
+        <form onSubmit={submit} className="flex items-end gap-1 p-2 sm:gap-1.5 sm:p-3">
           <input
             ref={fileRef}
             type="file"
@@ -257,7 +257,7 @@ export function MessageComposer({
           <button
             type="button"
             onClick={() => setShowEmoji((v) => !v)}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:h-10 sm:w-10"
             aria-label="Emoji"
           >
             <Smile className="h-5 w-5" />
@@ -266,7 +266,7 @@ export function MessageComposer({
             type="button"
             onClick={onPickFile}
             disabled={uploading}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50 sm:h-10 sm:w-10"
             aria-label="Attach"
           >
             <Paperclip className="h-5 w-5" />
@@ -300,7 +300,7 @@ export function MessageComposer({
             rows={1}
             placeholder={uploading ? "Uploading…" : "Type a message"}
             disabled={disabled || uploading}
-            className="min-h-[40px] max-h-[140px] flex-1 resize-none rounded-2xl border border-border/60 bg-background/60 px-4 py-2.5 text-sm leading-relaxed outline-none ring-ring backdrop-blur placeholder:text-muted-foreground focus-visible:ring-2"
+            className="min-h-10 max-h-[140px] min-w-0 flex-1 resize-none rounded-2xl border border-border/60 bg-background/60 px-3 py-2.5 text-base leading-relaxed outline-none ring-ring backdrop-blur placeholder:text-muted-foreground focus-visible:ring-2 sm:px-4 sm:text-sm"
           />
 
           {value.trim() ? (
