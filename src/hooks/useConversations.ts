@@ -96,6 +96,7 @@ export function useConversations(userId: string | undefined) {
         is_pinned: m.is_pinned,
         is_muted: m.is_muted,
         last_read_at: m.last_read_at,
+        wallpaper: m.wallpaper,
       };
 
       if (c.type === "direct") {
