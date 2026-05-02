@@ -155,6 +155,12 @@ export function useMessages(conversationId: string | undefined, currentUserId: s
           setMessages((prev) => (prev.some((p) => p.id === m.id) ? prev : [...prev, enriched]));
           if (currentUserId && m.sender_id !== currentUserId) {
             await (supabase.rpc as any)("mark_conversation_read", { _conversation: conversationId });
+            await supabase
+              .from("message_reads")
+              .upsert(
+                [{ message_id: m.id, user_id: currentUserId }],
+                { onConflict: "message_id,user_id", ignoreDuplicates: true },
+              );
           }
         }
       )
