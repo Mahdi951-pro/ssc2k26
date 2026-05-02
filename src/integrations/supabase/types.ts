@@ -57,6 +57,7 @@ export type Database = {
           joined_at: string
           last_read_at: string | null
           user_id: string
+          wallpaper: string | null
         }
         Insert: {
           conversation_id: string
@@ -67,6 +68,7 @@ export type Database = {
           joined_at?: string
           last_read_at?: string | null
           user_id: string
+          wallpaper?: string | null
         }
         Update: {
           conversation_id?: string
@@ -77,6 +79,7 @@ export type Database = {
           joined_at?: string
           last_read_at?: string | null
           user_id?: string
+          wallpaper?: string | null
         }
         Relationships: [
           {
@@ -100,6 +103,7 @@ export type Database = {
           last_message_at: string | null
           locked_section: string | null
           name: string | null
+          pinned_message_id: string | null
           type: Database["public"]["Enums"]["conversation_type"]
         }
         Insert: {
@@ -113,6 +117,7 @@ export type Database = {
           last_message_at?: string | null
           locked_section?: string | null
           name?: string | null
+          pinned_message_id?: string | null
           type?: Database["public"]["Enums"]["conversation_type"]
         }
         Update: {
@@ -126,6 +131,7 @@ export type Database = {
           last_message_at?: string | null
           locked_section?: string | null
           name?: string | null
+          pinned_message_id?: string | null
           type?: Database["public"]["Enums"]["conversation_type"]
         }
         Relationships: []
@@ -677,6 +683,7 @@ export type Database = {
         Args: { _conversation: string }
         Returns: undefined
       }
+      mark_message_read: { Args: { _message: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
