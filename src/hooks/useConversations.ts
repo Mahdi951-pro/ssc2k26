@@ -48,7 +48,7 @@ export function useConversations(userId: string | undefined) {
     const { data: memberships, error } = await supabase
       .from("conversation_members")
       .select(
-        "conversation_id, is_pinned, is_muted, last_read_at, conversations(id, type, name, description, avatar_url, last_message_at, is_default)"
+        "conversation_id, is_pinned, is_muted, last_read_at, wallpaper, conversations(id, type, name, description, avatar_url, last_message_at, is_default, pinned_message_id)"
       )
       .eq("user_id", userId);
 
