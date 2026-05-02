@@ -194,6 +194,22 @@ export function useMessages(conversationId: string | undefined, currentUserId: s
           );
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "message_reads" },
+        (payload) => {
+          const mid = (payload.new as any)?.message_id;
+          const uid = (payload.new as any)?.user_id;
+          if (!mid || !uid) return;
+          setMessages((prev) =>
+            prev.map((p) =>
+              p.id === mid && !(p.read_by ?? []).includes(uid)
+                ? { ...p, read_by: [...(p.read_by ?? []), uid] }
+                : p,
+            ),
+          );
+        },
+      )
       .subscribe();
 
     return () => {
