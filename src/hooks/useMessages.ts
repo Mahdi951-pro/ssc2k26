@@ -18,6 +18,7 @@ export interface Message {
   sender?: { display_name: string; avatar_url: string | null; badges?: string[] | null } | null;
   reactions?: { emoji: string; user_id: string }[];
   reply_message?: { content: string | null; sender_id: string } | null;
+  read_by?: string[];
 }
 
 export function useMessages(conversationId: string | undefined, currentUserId: string | undefined) {
