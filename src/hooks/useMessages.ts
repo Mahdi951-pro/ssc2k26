@@ -43,6 +43,26 @@ export function useMessages(conversationId: string | undefined, currentUserId: s
 
   const enrich = useCallback(
     async (msgs: Message[]) => {
+      const ids = msgs.map((m) => m.id);
+      const [reactionsRes, readsRes] = ids.length
+        ? await Promise.all([
+            supabase.from("message_reactions").select("message_id, emoji, user_id").in("message_id", ids),
+            supabase.from("message_reads").select("message_id, user_id").in("message_id", ids),
+          ])
+        : [{ data: [] as any[] }, { data: [] as any[] }];
+      const rxByMsg = new Map<string, { emoji: string; user_id: string }[]>();
+      (reactionsRes.data ?? []).forEach((r: any) => {
+        const arr = rxByMsg.get(r.message_id) ?? [];
+        arr.push({ emoji: r.emoji, user_id: r.user_id });
+        rxByMsg.set(r.message_id, arr);
+      });
+      const readsByMsg = new Map<string, string[]>();
+      (readsRes.data ?? []).forEach((r: any) => {
+        const arr = readsByMsg.get(r.message_id) ?? [];
+        arr.push(r.user_id);
+        readsByMsg.set(r.message_id, arr);
+      });
+
       const enriched = await Promise.all(
         msgs.map(async (m) => {
           const sender = await fetchProfile(m.sender_id);
@@ -55,11 +75,13 @@ export function useMessages(conversationId: string | undefined, currentUserId: s
               .maybeSingle();
             reply_message = data;
           }
-          const { data: reactions } = await supabase
-            .from("message_reactions")
-            .select("emoji, user_id")
-            .eq("message_id", m.id);
-          return { ...m, sender, reactions: reactions ?? [], reply_message };
+          return {
+            ...m,
+            sender,
+            reactions: rxByMsg.get(m.id) ?? [],
+            read_by: readsByMsg.get(m.id) ?? [],
+            reply_message,
+          };
         })
       );
       return enriched;
