@@ -114,9 +114,20 @@ export function useMessages(conversationId: string | undefined, currentUserId: s
     setMessages(enriched);
     setLoading(false);
 
-    // Mark read
+    // Mark conversation read + record per-message reads for ticks
     if (currentUserId) {
       await (supabase.rpc as any)("mark_conversation_read", { _conversation: conversationId });
+      const incoming = (enriched as Message[]).filter(
+        (m) => m.sender_id !== currentUserId && !(m.read_by ?? []).includes(currentUserId),
+      );
+      if (incoming.length) {
+        await supabase
+          .from("message_reads")
+          .upsert(
+            incoming.map((m) => ({ message_id: m.id, user_id: currentUserId })),
+            { onConflict: "message_id,user_id", ignoreDuplicates: true },
+          );
+      }
     }
   }, [conversationId, enrich, currentUserId]);
 
