@@ -21,10 +21,12 @@ export interface Conversation {
   avatar_url: string | null;
   last_message_at: string | null;
   is_default: boolean | null;
+  pinned_message_id?: string | null;
   // joined
   is_pinned?: boolean;
   is_muted?: boolean;
   last_read_at?: string | null;
+  wallpaper?: string | null;
   other_member?: Profile | null;
   last_message?: { content: string | null; sender_id: string; created_at: string; type: string } | null;
   unread_count?: number;
