@@ -18,6 +18,7 @@ export interface Message {
   sender?: { display_name: string; avatar_url: string | null; badges?: string[] | null } | null;
   reactions?: { emoji: string; user_id: string }[];
   reply_message?: { content: string | null; sender_id: string } | null;
+  read_by?: string[];
 }
 
 export function useMessages(conversationId: string | undefined, currentUserId: string | undefined) {
@@ -42,6 +43,26 @@ export function useMessages(conversationId: string | undefined, currentUserId: s
 
   const enrich = useCallback(
     async (msgs: Message[]) => {
+      const ids = msgs.map((m) => m.id);
+      const [reactionsRes, readsRes] = ids.length
+        ? await Promise.all([
+            supabase.from("message_reactions").select("message_id, emoji, user_id").in("message_id", ids),
+            supabase.from("message_reads").select("message_id, user_id").in("message_id", ids),
+          ])
+        : [{ data: [] as any[] }, { data: [] as any[] }];
+      const rxByMsg = new Map<string, { emoji: string; user_id: string }[]>();
+      (reactionsRes.data ?? []).forEach((r: any) => {
+        const arr = rxByMsg.get(r.message_id) ?? [];
+        arr.push({ emoji: r.emoji, user_id: r.user_id });
+        rxByMsg.set(r.message_id, arr);
+      });
+      const readsByMsg = new Map<string, string[]>();
+      (readsRes.data ?? []).forEach((r: any) => {
+        const arr = readsByMsg.get(r.message_id) ?? [];
+        arr.push(r.user_id);
+        readsByMsg.set(r.message_id, arr);
+      });
+
       const enriched = await Promise.all(
         msgs.map(async (m) => {
           const sender = await fetchProfile(m.sender_id);
@@ -54,11 +75,13 @@ export function useMessages(conversationId: string | undefined, currentUserId: s
               .maybeSingle();
             reply_message = data;
           }
-          const { data: reactions } = await supabase
-            .from("message_reactions")
-            .select("emoji, user_id")
-            .eq("message_id", m.id);
-          return { ...m, sender, reactions: reactions ?? [], reply_message };
+          return {
+            ...m,
+            sender,
+            reactions: rxByMsg.get(m.id) ?? [],
+            read_by: readsByMsg.get(m.id) ?? [],
+            reply_message,
+          };
         })
       );
       return enriched;
@@ -91,9 +114,20 @@ export function useMessages(conversationId: string | undefined, currentUserId: s
     setMessages(enriched);
     setLoading(false);
 
-    // Mark read
+    // Mark conversation read + record per-message reads for ticks
     if (currentUserId) {
       await (supabase.rpc as any)("mark_conversation_read", { _conversation: conversationId });
+      const incoming = (enriched as Message[]).filter(
+        (m) => m.sender_id !== currentUserId && !(m.read_by ?? []).includes(currentUserId),
+      );
+      if (incoming.length) {
+        await supabase
+          .from("message_reads")
+          .upsert(
+            incoming.map((m) => ({ message_id: m.id, user_id: currentUserId })),
+            { onConflict: "message_id,user_id", ignoreDuplicates: true },
+          );
+      }
     }
   }, [conversationId, enrich, currentUserId]);
 
@@ -121,6 +155,12 @@ export function useMessages(conversationId: string | undefined, currentUserId: s
           setMessages((prev) => (prev.some((p) => p.id === m.id) ? prev : [...prev, enriched]));
           if (currentUserId && m.sender_id !== currentUserId) {
             await (supabase.rpc as any)("mark_conversation_read", { _conversation: conversationId });
+            await supabase
+              .from("message_reads")
+              .upsert(
+                [{ message_id: m.id, user_id: currentUserId }],
+                { onConflict: "message_id,user_id", ignoreDuplicates: true },
+              );
           }
         }
       )
@@ -153,6 +193,22 @@ export function useMessages(conversationId: string | undefined, currentUserId: s
             prev.map((p) => (p.id === mid ? { ...p, reactions: reactions ?? [] } : p))
           );
         }
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "message_reads" },
+        (payload) => {
+          const mid = (payload.new as any)?.message_id;
+          const uid = (payload.new as any)?.user_id;
+          if (!mid || !uid) return;
+          setMessages((prev) =>
+            prev.map((p) =>
+              p.id === mid && !(p.read_by ?? []).includes(uid)
+                ? { ...p, read_by: [...(p.read_by ?? []), uid] }
+                : p,
+            ),
+          );
+        },
       )
       .subscribe();
 

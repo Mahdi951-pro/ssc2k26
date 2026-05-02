@@ -21,10 +21,12 @@ export interface Conversation {
   avatar_url: string | null;
   last_message_at: string | null;
   is_default: boolean | null;
+  pinned_message_id?: string | null;
   // joined
   is_pinned?: boolean;
   is_muted?: boolean;
   last_read_at?: string | null;
+  wallpaper?: string | null;
   other_member?: Profile | null;
   last_message?: { content: string | null; sender_id: string; created_at: string; type: string } | null;
   unread_count?: number;
@@ -46,7 +48,7 @@ export function useConversations(userId: string | undefined) {
     const { data: memberships, error } = await supabase
       .from("conversation_members")
       .select(
-        "conversation_id, is_pinned, is_muted, last_read_at, conversations(id, type, name, description, avatar_url, last_message_at, is_default)"
+        "conversation_id, is_pinned, is_muted, last_read_at, wallpaper, conversations(id, type, name, description, avatar_url, last_message_at, is_default, pinned_message_id)"
       )
       .eq("user_id", userId);
 
@@ -94,6 +96,7 @@ export function useConversations(userId: string | undefined) {
         is_pinned: m.is_pinned,
         is_muted: m.is_muted,
         last_read_at: m.last_read_at,
+        wallpaper: m.wallpaper,
       };
 
       if (c.type === "direct") {

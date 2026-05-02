@@ -1,9 +1,22 @@
 import { Message } from "@/hooks/useMessages";
 import { UserAvatar } from "./UserAvatar";
 import { VerifiedBadge } from "./VerifiedBadge";
-import { CheckCheck, Reply, Smile, Trash2, Forward, MoreVertical, Flag, Ban, Play, Pause, Download } from "lucide-react";
+import {
+  Reply,
+  Smile,
+  Trash2,
+  Forward,
+  MoreVertical,
+  Flag,
+  Ban,
+  Play,
+  Pause,
+  Download,
+  Pencil,
+  Pin,
+} from "lucide-react";
 import { format } from "date-fns";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +26,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PollCard } from "./PollCard";
 import { ReportDialog } from "./ReportDialog";
+import { MessageStatus } from "./MessageStatus";
+import { EditMessageDialog } from "./EditMessageDialog";
+import { gsap } from "gsap";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Props {
   message: Message;
@@ -20,6 +38,9 @@ interface Props {
   showSender: boolean;
   isGroup: boolean;
   currentUserId: string;
+  conversationId: string;
+  otherMembersCount: number;
+  isAdmin: boolean;
   onReply: (m: Message) => void;
   onReact: (m: Message, emoji: string) => void;
   onDelete: (m: Message, forEveryone: boolean) => void;
@@ -37,6 +58,9 @@ export function MessageBubble({
   showSender,
   isGroup,
   currentUserId,
+  conversationId,
+  otherMembersCount,
+  isAdmin,
   onReply,
   onReact,
   onDelete,
@@ -46,6 +70,9 @@ export function MessageBubble({
 }: Props) {
   const [showReactions, setShowReactions] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const swipeRef = useRef<HTMLDivElement>(null);
+  const replyHintRef = useRef<HTMLDivElement>(null);
 
   const pollMatch = message.content?.match(POLL_TAG);
   const pollId = pollMatch?.[1] ?? null;
@@ -53,6 +80,64 @@ export function MessageBubble({
     () => (message.content || "").replace(POLL_TAG, "").replace(/^📊 Poll:\s*/i, "").trim(),
     [message.content]
   );
+
+  // Swipe-to-reply (touch + pointer)
+  useEffect(() => {
+    const el = swipeRef.current;
+    if (!el) return;
+    let startX = 0;
+    let startY = 0;
+    let active = false;
+    let triggered = false;
+
+    const onStart = (e: PointerEvent | TouchEvent) => {
+      const point = "touches" in e ? e.touches[0] : (e as PointerEvent);
+      startX = point.clientX;
+      startY = point.clientY;
+      active = true;
+      triggered = false;
+    };
+    const onMove = (e: PointerEvent | TouchEvent) => {
+      if (!active) return;
+      const point = "touches" in e ? e.touches[0] : (e as PointerEvent);
+      const dx = point.clientX - startX;
+      const dy = point.clientY - startY;
+      if (Math.abs(dy) > Math.abs(dx)) return; // vertical scroll
+      // Only allow swipe in the natural direction (mine: left, theirs: right)
+      const dir = isMine ? -1 : 1;
+      const delta = dir > 0 ? Math.max(0, Math.min(dx, 90)) : Math.max(-90, Math.min(dx, 0));
+      gsap.set(el, { x: delta });
+      if (replyHintRef.current) {
+        gsap.set(replyHintRef.current, {
+          opacity: Math.min(1, Math.abs(delta) / 60),
+          scale: 0.6 + Math.min(1, Math.abs(delta) / 60) * 0.4,
+        });
+      }
+      if (Math.abs(delta) > 60 && !triggered) {
+        triggered = true;
+        // haptic-style pop
+        gsap.fromTo(el, { x: delta }, { x: delta + dir * 6, duration: 0.12, yoyo: true, repeat: 1 });
+      }
+    };
+    const onEnd = () => {
+      if (!active) return;
+      active = false;
+      if (triggered) onReply(message);
+      gsap.to(el, { x: 0, duration: 0.35, ease: "power3.out" });
+      if (replyHintRef.current) gsap.to(replyHintRef.current, { opacity: 0, scale: 0.5, duration: 0.2 });
+    };
+
+    el.addEventListener("pointerdown", onStart as EventListener);
+    el.addEventListener("pointermove", onMove as EventListener);
+    el.addEventListener("pointerup", onEnd);
+    el.addEventListener("pointercancel", onEnd);
+    return () => {
+      el.removeEventListener("pointerdown", onStart as EventListener);
+      el.removeEventListener("pointermove", onMove as EventListener);
+      el.removeEventListener("pointerup", onEnd);
+      el.removeEventListener("pointercancel", onEnd);
+    };
+  }, [isMine, message, onReply]);
 
   const blockedSender = !isMine && isBlocked(message.sender_id);
   const isDeleted = message.deleted_for_everyone;
@@ -74,12 +159,35 @@ export function MessageBubble({
     (message.reactions || []).filter((r) => r.user_id === currentUserId).map((r) => r.emoji)
   );
 
+  // Read count: number of OTHER users who have read
+  const readByOthers = (message.read_by ?? []).filter((u) => u !== currentUserId).length;
+
+  const pinMessage = async () => {
+    const { error } = await supabase
+      .from("conversations")
+      .update({ pinned_message_id: message.id })
+      .eq("id", conversationId);
+    if (error) toast.error(error.message);
+    else toast.success("Pinned");
+  };
+
   return (
     <div
-      className={`group flex w-full gap-2 px-2 sm:px-4 ${
+      className={`group relative flex w-full gap-2 px-2 sm:px-4 ${
         isMine ? "justify-end" : "justify-start"
       } animate-fade-in-up`}
+      data-message-id={message.id}
     >
+      {/* Swipe reply hint icon */}
+      <div
+        ref={replyHintRef}
+        className={`pointer-events-none absolute top-1/2 -translate-y-1/2 ${
+          isMine ? "right-2" : "left-2"
+        } flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 opacity-0`}
+      >
+        <Reply className="h-4 w-4 text-primary" />
+      </div>
+
       {!isMine && isGroup && (
         <div className="w-8 shrink-0">
           {showSender && (
@@ -91,7 +199,14 @@ export function MessageBubble({
           )}
         </div>
       )}
-      <div className={`flex max-w-[85%] flex-col sm:max-w-[70%] ${isMine ? "items-end" : "items-start"}`}>
+
+      <div
+        ref={swipeRef}
+        className={`flex max-w-[85%] flex-col touch-pan-y sm:max-w-[70%] ${
+          isMine ? "items-end" : "items-start"
+        }`}
+        style={{ touchAction: "pan-y" }}
+      >
         {showSender && !isMine && isGroup && (
           <span className="mb-0.5 ml-3 inline-flex items-center gap-1 text-[11px] font-semibold text-primary">
             {message.sender?.display_name}
@@ -158,8 +273,11 @@ export function MessageBubble({
                 isMine ? "text-bubble-out-foreground/60" : "text-muted-foreground"
               }`}
             >
+              {message.edited_at && !isDeleted && <span className="italic">edited</span>}
               <span>{format(new Date(message.created_at), "HH:mm")}</span>
-              {isMine && !isDeleted && <CheckCheck className="h-3 w-3" />}
+              {isMine && !isDeleted && (
+                <MessageStatus readCount={readByOthers} otherMembers={otherMembersCount} />
+              )}
             </div>
           </div>
 
@@ -196,6 +314,16 @@ export function MessageBubble({
                   <DropdownMenuItem onClick={() => onForward(message)}>
                     <Forward className="mr-2 h-4 w-4" /> Copy / Forward
                   </DropdownMenuItem>
+                  {(isMine || isAdmin) && (
+                    <DropdownMenuItem onClick={pinMessage}>
+                      <Pin className="mr-2 h-4 w-4" /> Pin in chat
+                    </DropdownMenuItem>
+                  )}
+                  {isMine && message.type === "text" && cleanedContent && (
+                    <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                      <Pencil className="mr-2 h-4 w-4" /> Edit
+                    </DropdownMenuItem>
+                  )}
                   {!isMine && (
                     <>
                       <DropdownMenuSeparator />
@@ -235,9 +363,14 @@ export function MessageBubble({
                 <button
                   key={e}
                   type="button"
-                  onClick={() => {
+                  onClick={(ev) => {
                     onReact(message, e);
                     setShowReactions(false);
+                    gsap.fromTo(
+                      ev.currentTarget,
+                      { scale: 1 },
+                      { scale: 1.6, duration: 0.18, yoyo: true, repeat: 1, ease: "power2.out" }
+                    );
                   }}
                   className="rounded-full p-1 text-lg transition-transform hover:scale-125"
                 >
@@ -268,11 +401,18 @@ export function MessageBubble({
           </div>
         )}
       </div>
+
       <ReportDialog
         open={reportOpen}
         onOpenChange={setReportOpen}
         messageId={message.id}
         reportedUserId={message.sender_id}
+      />
+      <EditMessageDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        messageId={message.id}
+        initial={cleanedContent}
       />
     </div>
   );

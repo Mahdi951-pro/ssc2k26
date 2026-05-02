@@ -7,11 +7,29 @@ import { MessageBubble } from "./MessageBubble";
 import { MessageComposer } from "./MessageComposer";
 import { UserAvatar } from "./UserAvatar";
 import { VerifiedBadge } from "./VerifiedBadge";
-import { ArrowLeft, Megaphone, Users, Loader2, MessageCircle, Lock } from "lucide-react";
+import {
+  ArrowLeft,
+  Megaphone,
+  Users,
+  Loader2,
+  MessageCircle,
+  Lock,
+  ImageIcon,
+  MoreVertical,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, isSameDay } from "date-fns";
 import { useBlocks } from "@/hooks/useBlocks";
+import { WallpaperPicker, wallpaperBackground } from "./WallpaperPicker";
+import { PinnedBanner } from "./PinnedBanner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { gsap } from "gsap";
 
 interface Props {
   conversation: Conversation | null;
@@ -40,13 +58,26 @@ export function ChatPane({ conversation, onBack }: Props) {
   const { isBlocked, block } = useBlocks();
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [wallpaper, setWallpaper] = useState<string | null>(conversation?.wallpaper ?? null);
+  const [wpOpen, setWpOpen] = useState(false);
+  const [pinnedId, setPinnedId] = useState<string | null>(conversation?.pinned_message_id ?? null);
+  const [otherMembersCount, setOtherMembersCount] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+
   const isAnnouncement = conversation?.type === "announcement";
   const isGroup = conversation?.type !== "direct";
   const canPost = !isAnnouncement || isAdmin;
   const isSectionLocked = Boolean(
     (conversation as (Conversation & { is_section_locked?: boolean }) | null)?.is_section_locked,
   );
+
+  // Reset local state when conversation switches
+  useEffect(() => {
+    setWallpaper(conversation?.wallpaper ?? null);
+    setPinnedId(conversation?.pinned_message_id ?? null);
+    setReplyTo(null);
+  }, [conversation?.id, conversation?.wallpaper, conversation?.pinned_message_id]);
 
   useEffect(() => {
     if (!userId) return;
@@ -58,6 +89,54 @@ export function ChatPane({ conversation, onBack }: Props) {
       .maybeSingle()
       .then(({ data }) => setIsAdmin(!!data));
   }, [userId]);
+
+  // Other members count for ticks
+  useEffect(() => {
+    if (!conversation?.id || !userId) {
+      setOtherMembersCount(0);
+      return;
+    }
+    supabase
+      .from("conversation_members")
+      .select("user_id", { count: "exact", head: true })
+      .eq("conversation_id", conversation.id)
+      .neq("user_id", userId)
+      .then(({ count }) => setOtherMembersCount(count ?? 0));
+  }, [conversation?.id, userId]);
+
+  // Subscribe to conversation row changes (pinned message updates)
+  useEffect(() => {
+    if (!conversation?.id) return;
+    const ch = supabase
+      .channel(`conv-${conversation.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "conversations",
+          filter: `id=eq.${conversation.id}`,
+        },
+        (payload) => {
+          const p = payload.new as { pinned_message_id: string | null };
+          setPinnedId(p.pinned_message_id);
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [conversation?.id]);
+
+  // GSAP header entry
+  useEffect(() => {
+    if (!headerRef.current || !conversation) return;
+    gsap.fromTo(
+      headerRef.current,
+      { y: -12, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+    );
+  }, [conversation?.id]);
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -119,10 +198,21 @@ export function ChatPane({ conversation, onBack }: Props) {
   };
 
   const forward = async (msg: Message) => {
-    // simplified: copy to clipboard for now
     if (msg.content) {
       navigator.clipboard.writeText(msg.content);
       toast.success("Message copied — paste anywhere to forward");
+    }
+  };
+
+  const jumpToMessage = (id: string) => {
+    const node = document.querySelector(`[data-message-id="${id}"]`) as HTMLElement | null;
+    if (node && scrollRef.current) {
+      node.scrollIntoView({ behavior: "smooth", block: "center" });
+      gsap.fromTo(
+        node,
+        { backgroundColor: "rgba(168,85,247,0.18)" },
+        { backgroundColor: "transparent", duration: 1.6, ease: "power2.out" },
+      );
     }
   };
 
@@ -155,10 +245,26 @@ export function ChatPane({ conversation, onBack }: Props) {
   let lastDate: Date | null = null;
   let lastSender: string | null = null;
 
+  const wpBg = wallpaperBackground(wallpaper);
+
   return (
-    <section className="aurora flex h-full min-h-0 flex-1 flex-col">
+    <section
+      className="aurora flex h-full min-h-0 flex-1 flex-col"
+      style={
+        wpBg
+          ? {
+              backgroundImage: wpBg,
+              backgroundSize: "cover",
+              backgroundAttachment: "local",
+            }
+          : undefined
+      }
+    >
       {/* Header */}
-      <header className="glass-thin relative z-10 flex shrink-0 items-center gap-3 px-3 py-2.5 sm:px-4">
+      <header
+        ref={headerRef}
+        className="glass-thin relative z-10 flex shrink-0 items-center gap-3 px-3 py-2.5 sm:px-4"
+      >
         <button
           onClick={onBack}
           className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent/10 md:hidden"
@@ -194,7 +300,31 @@ export function ChatPane({ conversation, onBack }: Props) {
               : subtitle}
           </div>
         </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent/10"
+              aria-label="Chat options"
+            >
+              <MoreVertical className="h-5 w-5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="z-50">
+            <DropdownMenuItem onClick={() => setWpOpen(true)}>
+              <ImageIcon className="mr-2 h-4 w-4" /> Change wallpaper
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </header>
+
+      <PinnedBanner
+        conversationId={conversation.id}
+        pinnedMessageId={pinnedId}
+        isAdmin={isAdmin}
+        isCreator={true}
+        onJump={jumpToMessage}
+      />
 
       {/* Messages */}
       <div ref={scrollRef} className="relative z-10 min-h-0 flex-1 overflow-y-auto py-3 sm:py-4">
@@ -232,6 +362,9 @@ export function ChatPane({ conversation, onBack }: Props) {
                     showSender={showSender}
                     isGroup={isGroup}
                     currentUserId={user!.id}
+                    conversationId={conversation.id}
+                    otherMembersCount={otherMembersCount}
+                    isAdmin={isAdmin}
                     onReply={setReplyTo}
                     onReact={react}
                     onDelete={del}
@@ -281,6 +414,17 @@ export function ChatPane({ conversation, onBack }: Props) {
           <Megaphone className="h-3.5 w-3.5" />
           Only admins can post in this announcement channel.
         </div>
+      )}
+
+      {user && (
+        <WallpaperPicker
+          open={wpOpen}
+          onOpenChange={setWpOpen}
+          conversationId={conversation.id}
+          userId={user.id}
+          current={wallpaper}
+          onSaved={(wp) => setWallpaper(wp)}
+        />
       )}
     </section>
   );
