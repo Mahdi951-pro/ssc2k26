@@ -217,6 +217,7 @@ export function MessageBubble({
         )}
         <div className="relative">
           <div
+            onDoubleClick={() => onReact(message, "❤️")}
             className={`relative rounded-2xl px-3 py-2 shadow-bubble ${
               isMine
                 ? "rounded-br-md bg-bubble-out text-bubble-out-foreground"
