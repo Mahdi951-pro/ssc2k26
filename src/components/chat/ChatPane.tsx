@@ -16,13 +16,16 @@ import {
   Lock,
   ImageIcon,
   MoreVertical,
+  Search as SearchIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { format, isSameDay } from "date-fns";
+import { format, formatDistanceToNowStrict, isSameDay } from "date-fns";
 import { useBlocks } from "@/hooks/useBlocks";
 import { WallpaperPicker, wallpaperBackground } from "./WallpaperPicker";
 import { PinnedBanner } from "./PinnedBanner";
+import { ChatSearch } from "./ChatSearch";
+import { ImageLightbox } from "./ImageLightbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,6 +65,9 @@ export function ChatPane({ conversation, onBack }: Props) {
   const [wpOpen, setWpOpen] = useState(false);
   const [pinnedId, setPinnedId] = useState<string | null>(conversation?.pinned_message_id ?? null);
   const [otherMembersCount, setOtherMembersCount] = useState(0);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
 
@@ -234,18 +240,38 @@ export function ChatPane({ conversation, onBack }: Props) {
     conversation.type === "direct"
       ? conversation.other_member?.display_name || "Direct chat"
       : conversation.name || "Group";
-  const subtitle =
-    conversation.type === "direct"
-      ? conversation.other_member?.is_online
-        ? "online"
-        : "offline"
-      : conversation.description || (isAnnouncement ? "Announcement channel" : "Group chat");
+  const otherMember = conversation.other_member;
+  let subtitle: string;
+  if (conversation.type === "direct") {
+    if (otherMember?.is_online) {
+      subtitle = "online";
+    } else if (otherMember?.privacy_show_online !== false && otherMember?.last_seen) {
+      try {
+        subtitle = `last seen ${formatDistanceToNowStrict(new Date(otherMember.last_seen), { addSuffix: true })}`;
+      } catch {
+        subtitle = "offline";
+      }
+    } else {
+      subtitle = "offline";
+    }
+  } else {
+    subtitle = conversation.description || (isAnnouncement ? "Announcement channel" : "Group chat");
+  }
 
   // Build day-grouped messages
   let lastDate: Date | null = null;
   let lastSender: string | null = null;
 
   const wpBg = wallpaperBackground(wallpaper);
+  const imageUrls = messages
+    .filter((m) => m.type === "image" && m.media_url && !m.deleted_for_everyone)
+    .map((m) => m.media_url as string);
+
+  const openImage = (url: string) => {
+    const idx = imageUrls.indexOf(url);
+    setLightboxIndex(idx >= 0 ? idx : 0);
+    setLightboxOpen(true);
+  };
 
   return (
     <section
@@ -300,6 +326,14 @@ export function ChatPane({ conversation, onBack }: Props) {
               : subtitle}
           </div>
         </div>
+        <button
+          type="button"
+          onClick={() => setSearchOpen((v) => !v)}
+          className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent/10"
+          aria-label="Search in chat"
+        >
+          <SearchIcon className="h-5 w-5" />
+        </button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -311,12 +345,22 @@ export function ChatPane({ conversation, onBack }: Props) {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="z-50">
+            <DropdownMenuItem onClick={() => setSearchOpen(true)}>
+              <SearchIcon className="mr-2 h-4 w-4" /> Search in chat
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setWpOpen(true)}>
               <ImageIcon className="mr-2 h-4 w-4" /> Change wallpaper
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </header>
+
+      <ChatSearch
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        messages={messages}
+        onJump={jumpToMessage}
+      />
 
       <PinnedBanner
         conversationId={conversation.id}
@@ -371,6 +415,7 @@ export function ChatPane({ conversation, onBack }: Props) {
                     onForward={forward}
                     isBlocked={isBlocked}
                     onBlock={block}
+                    onOpenImage={openImage}
                   />
                 </div>
               );
@@ -426,6 +471,12 @@ export function ChatPane({ conversation, onBack }: Props) {
           onSaved={(wp) => setWallpaper(wp)}
         />
       )}
+      <ImageLightbox
+        open={lightboxOpen}
+        onOpenChange={setLightboxOpen}
+        images={imageUrls}
+        startIndex={lightboxIndex}
+      />
     </section>
   );
 }

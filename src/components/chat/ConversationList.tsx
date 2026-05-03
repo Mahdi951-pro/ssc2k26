@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Conversation, useConversations } from "@/hooks/useConversations";
-import { ConversationItem } from "./ConversationItem";
+import { SwipeableConversationItem } from "./SwipeableConversationItem";
 import { Input } from "@/components/ui/input";
 import {
   Search,
@@ -50,6 +50,7 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
   const { user, signOut } = useAuth();
   const { conversations, loading, refresh } = useConversations(user?.id);
   const [query, setQuery] = useState("");
+  const [tab, setTab] = useState<"all" | "unread" | "groups">("all");
   const { theme, setTheme } = useTheme();
   const [profile, setProfile] = useState<{
     display_name: string;
@@ -74,7 +75,12 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
       .then(({ data }) => setIsAdmin(!!data));
   }, [user]);
 
+  const totalUnread = conversations.reduce((n, c) => n + (c.unread_count ?? 0), 0);
+  const groupCount = conversations.filter((c) => c.type !== "direct").length;
+
   const filtered = conversations.filter((c) => {
+    if (tab === "unread" && (c.unread_count ?? 0) === 0) return false;
+    if (tab === "groups" && c.type === "direct") return false;
     const q = query.trim().toLowerCase();
     if (!q) return true;
     const name = c.type === "direct" ? c.other_member?.display_name : c.name;
@@ -170,6 +176,37 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
         </div>
       </div>
 
+      {/* Filter tabs */}
+      <div className="flex shrink-0 gap-1 border-b border-sidebar-border/60 px-2 pb-2">
+        {([
+          { id: "all", label: "All", badge: 0 },
+          { id: "unread", label: "Unread", badge: totalUnread },
+          { id: "groups", label: "Groups", badge: groupCount },
+        ] as const).map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setTab(t.id)}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+              tab === t.id
+                ? "bg-gradient-brand text-primary-foreground shadow-soft"
+                : "bg-sidebar-accent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t.label}
+            {t.badge > 0 && (
+              <span
+                className={`rounded-full px-1.5 text-[10px] ${
+                  tab === t.id ? "bg-white/25" : "bg-primary/15 text-primary"
+                }`}
+              >
+                {t.badge > 99 ? "99+" : t.badge}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
       {/* List */}
       <div className="min-h-0 flex-1 overflow-y-auto px-1.5 py-1.5 sm:p-2">
         {loading ? (
@@ -179,17 +216,20 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
         ) : filtered.length === 0 ? (
           <div className="px-6 py-12 text-center">
             <MessageCircle className="mx-auto h-10 w-10 text-muted-foreground/50" />
-            <p className="mt-3 text-sm text-muted-foreground">No chats yet</p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {tab === "unread" ? "All caught up ✨" : "No chats here"}
+            </p>
           </div>
         ) : (
           <div className="space-y-0.5">
             {filtered.map((c) => (
-              <ConversationItem
+              <SwipeableConversationItem
                 key={c.id}
                 conversation={c}
                 active={selectedId === c.id}
                 currentUserId={user!.id}
                 onClick={() => onSelect(c)}
+                onChanged={refresh}
               />
             ))}
           </div>

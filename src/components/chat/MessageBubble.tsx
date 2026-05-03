@@ -47,6 +47,7 @@ interface Props {
   onForward: (m: Message) => void;
   isBlocked?: (id: string) => boolean;
   onBlock?: (id: string) => void;
+  onOpenImage?: (url: string) => void;
 }
 
 const POLL_TAG = /__poll__:([0-9a-f-]{36})/i;
@@ -67,6 +68,7 @@ export function MessageBubble({
   onForward,
   isBlocked = () => false,
   onBlock,
+  onOpenImage,
 }: Props) {
   const [showReactions, setShowReactions] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
@@ -217,6 +219,7 @@ export function MessageBubble({
         )}
         <div className="relative">
           <div
+            onDoubleClick={() => onReact(message, "❤️")}
             className={`relative rounded-2xl px-3 py-2 shadow-bubble ${
               isMine
                 ? "rounded-br-md bg-bubble-out text-bubble-out-foreground"
@@ -239,13 +242,17 @@ export function MessageBubble({
             {isDeleted ? (
               <p className="text-sm italic opacity-60">🚫 This message was deleted</p>
             ) : message.type === "image" && message.media_url ? (
-              <a href={message.media_url} target="_blank" rel="noreferrer">
+              <button
+                type="button"
+                onClick={() => onOpenImage?.(message.media_url as string)}
+                className="block overflow-hidden rounded-lg"
+              >
                 <img
                   src={message.media_url}
                   alt="attachment"
                   className="max-h-72 rounded-lg object-cover"
                 />
-              </a>
+              </button>
             ) : message.type === "voice" && message.media_url ? (
               <VoicePlayer url={message.media_url} mine={isMine} />
             ) : message.type === "file" && message.media_url ? (
