@@ -326,6 +326,14 @@ export function ChatPane({ conversation, onBack }: Props) {
               : subtitle}
           </div>
         </div>
+        <button
+          type="button"
+          onClick={() => setSearchOpen((v) => !v)}
+          className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent/10"
+          aria-label="Search in chat"
+        >
+          <SearchIcon className="h-5 w-5" />
+        </button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -337,12 +345,22 @@ export function ChatPane({ conversation, onBack }: Props) {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="z-50">
+            <DropdownMenuItem onClick={() => setSearchOpen(true)}>
+              <SearchIcon className="mr-2 h-4 w-4" /> Search in chat
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setWpOpen(true)}>
               <ImageIcon className="mr-2 h-4 w-4" /> Change wallpaper
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </header>
+
+      <ChatSearch
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        messages={messages}
+        onJump={jumpToMessage}
+      />
 
       <PinnedBanner
         conversationId={conversation.id}
