@@ -65,6 +65,9 @@ export function ChatPane({ conversation, onBack }: Props) {
   const [wpOpen, setWpOpen] = useState(false);
   const [pinnedId, setPinnedId] = useState<string | null>(conversation?.pinned_message_id ?? null);
   const [otherMembersCount, setOtherMembersCount] = useState(0);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
 
