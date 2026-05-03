@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Conversation, useConversations } from "@/hooks/useConversations";
 import { ConversationItem } from "./ConversationItem";
+import { SwipeableConversationItem } from "./SwipeableConversationItem";
 import { Input } from "@/components/ui/input";
 import {
   Search,
@@ -50,6 +51,7 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
   const { user, signOut } = useAuth();
   const { conversations, loading, refresh } = useConversations(user?.id);
   const [query, setQuery] = useState("");
+  const [tab, setTab] = useState<"all" | "unread" | "groups">("all");
   const { theme, setTheme } = useTheme();
   const [profile, setProfile] = useState<{
     display_name: string;
@@ -74,7 +76,12 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
       .then(({ data }) => setIsAdmin(!!data));
   }, [user]);
 
+  const totalUnread = conversations.reduce((n, c) => n + (c.unread_count ?? 0), 0);
+  const groupCount = conversations.filter((c) => c.type !== "direct").length;
+
   const filtered = conversations.filter((c) => {
+    if (tab === "unread" && (c.unread_count ?? 0) === 0) return false;
+    if (tab === "groups" && c.type === "direct") return false;
     const q = query.trim().toLowerCase();
     if (!q) return true;
     const name = c.type === "direct" ? c.other_member?.display_name : c.name;
