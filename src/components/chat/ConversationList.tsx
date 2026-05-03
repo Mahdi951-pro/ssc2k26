@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Conversation, useConversations } from "@/hooks/useConversations";
-import { ConversationItem } from "./ConversationItem";
 import { SwipeableConversationItem } from "./SwipeableConversationItem";
 import { Input } from "@/components/ui/input";
 import {
