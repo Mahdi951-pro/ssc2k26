@@ -240,18 +240,38 @@ export function ChatPane({ conversation, onBack }: Props) {
     conversation.type === "direct"
       ? conversation.other_member?.display_name || "Direct chat"
       : conversation.name || "Group";
-  const subtitle =
-    conversation.type === "direct"
-      ? conversation.other_member?.is_online
-        ? "online"
-        : "offline"
-      : conversation.description || (isAnnouncement ? "Announcement channel" : "Group chat");
+  const otherMember = conversation.other_member;
+  let subtitle: string;
+  if (conversation.type === "direct") {
+    if (otherMember?.is_online) {
+      subtitle = "online";
+    } else if (otherMember?.privacy_show_online !== false && otherMember?.last_seen) {
+      try {
+        subtitle = `last seen ${formatDistanceToNowStrict(new Date(otherMember.last_seen), { addSuffix: true })}`;
+      } catch {
+        subtitle = "offline";
+      }
+    } else {
+      subtitle = "offline";
+    }
+  } else {
+    subtitle = conversation.description || (isAnnouncement ? "Announcement channel" : "Group chat");
+  }
 
   // Build day-grouped messages
   let lastDate: Date | null = null;
   let lastSender: string | null = null;
 
   const wpBg = wallpaperBackground(wallpaper);
+  const imageUrls = messages
+    .filter((m) => m.type === "image" && m.media_url && !m.deleted_for_everyone)
+    .map((m) => m.media_url as string);
+
+  const openImage = (url: string) => {
+    const idx = imageUrls.indexOf(url);
+    setLightboxIndex(idx >= 0 ? idx : 0);
+    setLightboxOpen(true);
+  };
 
   return (
     <section
