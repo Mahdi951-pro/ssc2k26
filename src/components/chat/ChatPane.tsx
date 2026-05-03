@@ -471,6 +471,12 @@ export function ChatPane({ conversation, onBack }: Props) {
           onSaved={(wp) => setWallpaper(wp)}
         />
       )}
+      <ImageLightbox
+        open={lightboxOpen}
+        onOpenChange={setLightboxOpen}
+        images={imageUrls}
+        startIndex={lightboxIndex}
+      />
     </section>
   );
 }
