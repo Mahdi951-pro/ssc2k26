@@ -415,6 +415,7 @@ export function ChatPane({ conversation, onBack }: Props) {
                     onForward={forward}
                     isBlocked={isBlocked}
                     onBlock={block}
+                    onOpenImage={openImage}
                   />
                 </div>
               );
