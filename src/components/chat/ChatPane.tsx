@@ -16,13 +16,16 @@ import {
   Lock,
   ImageIcon,
   MoreVertical,
+  Search as SearchIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { format, isSameDay } from "date-fns";
+import { format, formatDistanceToNowStrict, isSameDay } from "date-fns";
 import { useBlocks } from "@/hooks/useBlocks";
 import { WallpaperPicker, wallpaperBackground } from "./WallpaperPicker";
 import { PinnedBanner } from "./PinnedBanner";
+import { ChatSearch } from "./ChatSearch";
+import { ImageLightbox } from "./ImageLightbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
