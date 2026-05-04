@@ -92,16 +92,17 @@ export function MessageBubble({
     let active = false;
     let triggered = false;
 
-    const onStart = (e: PointerEvent | TouchEvent) => {
-      const point = "touches" in e ? e.touches[0] : (e as PointerEvent);
+    const onStart = (e: PointerEvent) => {
+      if (e.pointerType === "mouse") return;
+      const point = e;
       startX = point.clientX;
       startY = point.clientY;
       active = true;
       triggered = false;
     };
-    const onMove = (e: PointerEvent | TouchEvent) => {
+    const onMove = (e: PointerEvent) => {
       if (!active) return;
-      const point = "touches" in e ? e.touches[0] : (e as PointerEvent);
+      const point = e;
       const dx = point.clientX - startX;
       const dy = point.clientY - startY;
       if (Math.abs(dy) > Math.abs(dx)) return; // vertical scroll
@@ -220,7 +221,7 @@ export function MessageBubble({
         <div className="relative">
           <div
             onDoubleClick={() => onReact(message, "❤️")}
-            className={`relative rounded-2xl px-3 py-2 shadow-bubble ${
+            className={`relative max-w-full rounded-2xl px-3 py-2 shadow-bubble ${
               isMine
                 ? "rounded-br-md bg-bubble-out text-bubble-out-foreground"
                 : "rounded-bl-md bg-bubble-in text-bubble-in-foreground backdrop-blur-md"
@@ -245,12 +246,12 @@ export function MessageBubble({
               <button
                 type="button"
                 onClick={() => onOpenImage?.(message.media_url as string)}
-                className="block overflow-hidden rounded-lg"
+                className="block max-w-full overflow-hidden rounded-lg"
               >
                 <img
                   src={message.media_url}
                   alt="attachment"
-                  className="max-h-72 rounded-lg object-cover"
+                  className="max-h-72 max-w-full rounded-lg object-cover"
                 />
               </button>
             ) : message.type === "voice" && message.media_url ? (
