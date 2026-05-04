@@ -211,7 +211,7 @@ export function ChatPane({ conversation, onBack }: Props) {
   };
 
   const jumpToMessage = (id: string) => {
-    const node = document.querySelector(`[data-message-id="${id}"]`) as HTMLElement | null;
+    const node = document.querySelector(`[data-message-id="${CSS.escape(id)}"]`) as HTMLElement | null;
     if (node && scrollRef.current) {
       node.scrollIntoView({ behavior: "smooth", block: "center" });
       gsap.fromTo(
@@ -275,7 +275,7 @@ export function ChatPane({ conversation, onBack }: Props) {
 
   return (
     <section
-      className="aurora flex h-full min-h-0 flex-1 flex-col"
+      className="aurora flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
       style={
         wpBg
           ? {
@@ -312,7 +312,7 @@ export function ChatPane({ conversation, onBack }: Props) {
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1 truncate font-semibold">
+          <div className="flex min-w-0 items-center gap-1 truncate font-semibold">
             <span className="truncate">{name}</span>
             {conversation.type === "direct" &&
               conversation.other_member?.badges?.some((b) => b === "verified" || b === "admin") && (
@@ -371,7 +371,7 @@ export function ChatPane({ conversation, onBack }: Props) {
       />
 
       {/* Messages */}
-      <div ref={scrollRef} className="relative z-10 min-h-0 flex-1 overflow-y-auto py-3 sm:py-4">
+      <div ref={scrollRef} className="relative z-10 min-h-0 flex-1 overflow-x-hidden overflow-y-auto py-3 sm:py-4">
         {loading ? (
           <div className="flex items-center justify-center py-10">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
