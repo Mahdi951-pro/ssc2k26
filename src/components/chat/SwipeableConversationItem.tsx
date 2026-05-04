@@ -115,7 +115,7 @@ export function SwipeableConversationItem({
         <button
           type="button"
           onClick={toggleMute}
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/90 text-white shadow-elegant"
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-elegant"
           aria-label={conversation.is_muted ? "Unmute" : "Mute"}
         >
           {conversation.is_muted ? <Bell className="h-5 w-5" /> : <BellOff className="h-5 w-5" />}
@@ -126,7 +126,7 @@ export function SwipeableConversationItem({
         <button
           type="button"
           onClick={togglePin}
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/90 text-white shadow-elegant"
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-success text-success-foreground shadow-elegant"
           aria-label={conversation.is_pinned ? "Unpin" : "Pin"}
         >
           {conversation.is_pinned ? <PinOff className="h-5 w-5" /> : <Pin className="h-5 w-5" />}
