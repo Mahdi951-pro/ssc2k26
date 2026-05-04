@@ -89,7 +89,7 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
 
   return (
     <aside
-      className={`glass-thin flex h-full min-h-0 flex-col border-r border-sidebar-border ${className}`}
+      className={`glass-thin flex h-full min-h-0 min-w-0 flex-col overflow-hidden border-r border-sidebar-border ${className}`}
     >
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-sidebar-border/50 px-3 py-2.5 sm:px-4 sm:py-3">
@@ -177,7 +177,7 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
       </div>
 
       {/* Filter tabs */}
-      <div className="flex shrink-0 gap-1 border-b border-sidebar-border/60 px-2 pb-2">
+      <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-sidebar-border/60 px-2 pb-2 [scrollbar-width:none]">
         {([
           { id: "all", label: "All", badge: 0 },
           { id: "unread", label: "Unread", badge: totalUnread },
@@ -187,7 +187,7 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
             key={t.id}
             type="button"
             onClick={() => setTab(t.id)}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+              className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               tab === t.id
                 ? "bg-gradient-brand text-primary-foreground shadow-soft"
                 : "bg-sidebar-accent text-muted-foreground hover:text-foreground"
