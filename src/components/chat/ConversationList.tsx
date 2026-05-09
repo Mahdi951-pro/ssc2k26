@@ -38,6 +38,8 @@ import {
 import { StoriesBar } from "@/components/stories/StoriesBar";
 import { BroadcastBanner } from "@/components/stories/BroadcastBanner";
 import { NotificationPrompt } from "./NotificationPrompt";
+import { ActionLiveProDialog } from "./ActionLiveProDialog";
+import { Sparkles } from "lucide-react";
 
 interface Props {
   selectedId: string | null;
