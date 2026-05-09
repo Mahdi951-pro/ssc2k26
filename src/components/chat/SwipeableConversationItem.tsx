@@ -25,6 +25,8 @@ export function SwipeableConversationItem({
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const leftActionRef = useRef<HTMLDivElement>(null);
+  const rightActionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const card = cardRef.current;
@@ -35,8 +37,24 @@ export function SwipeableConversationItem({
     let dx = 0;
     let locked: "x" | "y" | null = null;
 
+    const setActionVisibility = (x: number) => {
+      const showRight = x < -2;
+      const showLeft = x > 2;
+      if (rightActionRef.current) {
+        rightActionRef.current.style.opacity = showRight
+          ? String(Math.min(1, Math.abs(x) / THRESHOLD))
+          : "0";
+        rightActionRef.current.style.pointerEvents = showRight ? "auto" : "none";
+      }
+      if (leftActionRef.current) {
+        leftActionRef.current.style.opacity = showLeft
+          ? String(Math.min(1, Math.abs(x) / THRESHOLD))
+          : "0";
+        leftActionRef.current.style.pointerEvents = showLeft ? "auto" : "none";
+      }
+    };
+
     const onStart = (e: PointerEvent) => {
-      // Ignore non-touch swipes on desktop to keep buttons clickable
       if (e.pointerType === "mouse") return;
       startX = e.clientX;
       startY = e.clientY;
@@ -55,13 +73,22 @@ export function SwipeableConversationItem({
       if (locked !== "x") return;
       dx = Math.max(-140, Math.min(140, ddx));
       gsap.set(card, { x: dx });
+      setActionVisibility(dx);
     };
     const onEnd = () => {
       if (!active) return;
       active = false;
       if (locked !== "x") return;
       const settle = Math.abs(dx) >= THRESHOLD ? Math.sign(dx) * 110 : 0;
-      gsap.to(card, { x: settle, duration: 0.32, ease: "power3.out" });
+      gsap.to(card, {
+        x: settle,
+        duration: 0.32,
+        ease: "power3.out",
+        onUpdate: () => {
+          const cx = gsap.getProperty(card, "x") as number;
+          setActionVisibility(cx);
+        },
+      });
     };
 
     card.addEventListener("pointerdown", onStart);
