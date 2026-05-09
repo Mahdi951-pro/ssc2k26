@@ -51,7 +51,8 @@ export function UserAvatar({ name, url, size = 40, online, showStatus, className
           style={{
             width: Math.max(8, size * 0.22),
             height: Math.max(8, size * 0.22),
-            boxShadow: "0 0 0 1px hsl(var(--success) / 0.4), 0 0 8px hsl(var(--success) / 0.6)",
+            boxShadow:
+              "0 0 0 1px color-mix(in oklab, var(--success) 50%, transparent), 0 0 8px color-mix(in oklab, var(--success) 60%, transparent)",
           }}
         />
       )}
