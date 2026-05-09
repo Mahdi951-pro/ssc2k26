@@ -53,6 +53,7 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
   const { conversations, loading, refresh } = useConversations(user?.id);
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<"all" | "unread" | "groups">("all");
+  const [aiOpen, setAiOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const [profile, setProfile] = useState<{
     display_name: string;
