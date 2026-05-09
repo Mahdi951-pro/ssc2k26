@@ -184,8 +184,7 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
             aria-label="Open ActionLivePro AI"
             className="group relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-brand shadow-soft transition-transform active:scale-95 sm:h-9 sm:w-9"
           >
-            <Sparkles className="h-4 w-4 text-primary-foreground" />
-            <span className="absolute inset-0 rounded-full bg-gradient-brand opacity-50 blur-md transition-opacity group-hover:opacity-80" />
+            <span className="absolute inset-0 rounded-full bg-gradient-brand opacity-40 blur-md" />
             <Sparkles className="relative h-4 w-4 text-primary-foreground" />
           </button>
         </div>
