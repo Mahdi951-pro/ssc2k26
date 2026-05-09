@@ -181,7 +181,7 @@ export function SwipeableConversationItem({
           {conversation.is_pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
         </button>
       </div>
-      <div ref={cardRef} className="relative bg-card will-change-transform">
+      <div ref={cardRef} className="relative bg-sidebar will-change-transform">
         <ConversationItem
           conversation={conversation}
           active={active}
