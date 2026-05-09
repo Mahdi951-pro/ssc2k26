@@ -168,16 +168,30 @@ export function ConversationList({ selectedId, onSelect, className = "", onOpenP
 
       {/* Search */}
       <div className="shrink-0 border-b border-sidebar-border p-2.5 sm:p-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search chats"
-            className="h-10 rounded-full border-transparent bg-sidebar-accent pl-9 text-base focus-visible:bg-background sm:h-9 sm:text-sm"
-          />
+        <div className="relative flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Ask ActionLivePro or search"
+              className="h-10 rounded-full border-transparent bg-sidebar-accent pl-9 pr-3 text-base focus-visible:bg-background sm:h-9 sm:text-sm"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setAiOpen(true)}
+            aria-label="Open ActionLivePro AI"
+            className="group relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-brand shadow-soft transition-transform active:scale-95 sm:h-9 sm:w-9"
+          >
+            <Sparkles className="h-4 w-4 text-primary-foreground" />
+            <span className="absolute inset-0 rounded-full bg-gradient-brand opacity-50 blur-md transition-opacity group-hover:opacity-80" />
+            <Sparkles className="relative h-4 w-4 text-primary-foreground" />
+          </button>
         </div>
       </div>
+
+      <ActionLiveProDialog open={aiOpen} onOpenChange={setAiOpen} />
 
       {/* Filter tabs */}
       <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-sidebar-border/60 px-2 pb-2 [scrollbar-width:none]">
