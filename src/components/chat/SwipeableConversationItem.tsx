@@ -104,7 +104,23 @@ export function SwipeableConversationItem({
   }, []);
 
   const reset = () => {
-    if (cardRef.current) gsap.to(cardRef.current, { x: 0, duration: 0.3, ease: "power3.out" });
+    if (cardRef.current) {
+      gsap.to(cardRef.current, {
+        x: 0,
+        duration: 0.3,
+        ease: "power3.out",
+        onUpdate: () => {
+          if (rightActionRef.current) {
+            rightActionRef.current.style.opacity = "0";
+            rightActionRef.current.style.pointerEvents = "none";
+          }
+          if (leftActionRef.current) {
+            leftActionRef.current.style.opacity = "0";
+            leftActionRef.current.style.pointerEvents = "none";
+          }
+        },
+      });
+    }
   };
 
   const togglePin = async () => {
@@ -138,34 +154,39 @@ export function SwipeableConversationItem({
   return (
     <div ref={wrapRef} className="relative overflow-hidden rounded-xl">
       {/* Right action (revealed when swiping left) */}
-      <div className="pointer-events-auto absolute inset-y-0 right-0 flex w-28 items-center justify-end pr-2">
+      <div
+        ref={rightActionRef}
+        className="pointer-events-none absolute inset-y-0 right-0 flex w-28 items-center justify-end pr-3 opacity-0 transition-opacity"
+      >
         <button
           type="button"
           onClick={toggleMute}
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-elegant"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-elegant"
           aria-label={conversation.is_muted ? "Unmute" : "Mute"}
         >
-          {conversation.is_muted ? <Bell className="h-5 w-5" /> : <BellOff className="h-5 w-5" />}
+          {conversation.is_muted ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
         </button>
       </div>
       {/* Left action (revealed when swiping right) */}
-      <div className="pointer-events-auto absolute inset-y-0 left-0 flex w-28 items-center justify-start pl-2">
+      <div
+        ref={leftActionRef}
+        className="pointer-events-none absolute inset-y-0 left-0 flex w-28 items-center justify-start pl-3 opacity-0 transition-opacity"
+      >
         <button
           type="button"
           onClick={togglePin}
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-success text-success-foreground shadow-elegant"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-success text-success-foreground shadow-elegant"
           aria-label={conversation.is_pinned ? "Unpin" : "Pin"}
         >
-          {conversation.is_pinned ? <PinOff className="h-5 w-5" /> : <Pin className="h-5 w-5" />}
+          {conversation.is_pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
         </button>
       </div>
-      <div ref={cardRef} className="relative bg-sidebar will-change-transform">
+      <div ref={cardRef} className="relative bg-card will-change-transform">
         <ConversationItem
           conversation={conversation}
           active={active}
           currentUserId={currentUserId}
           onClick={() => {
-            // If swiped open, first reset
             if (cardRef.current && Math.abs(gsap.getProperty(cardRef.current, "x") as number) > 4) {
               reset();
               return;
