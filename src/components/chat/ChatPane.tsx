@@ -12,12 +12,12 @@ import {
   Megaphone,
   Users,
   Loader2,
-  MessageCircle,
   Lock,
   ImageIcon,
   MoreVertical,
   Search as SearchIcon,
 } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, formatDistanceToNowStrict, isSameDay } from "date-fns";
@@ -225,9 +225,7 @@ export function ChatPane({ conversation, onBack }: Props) {
   if (!conversation) {
     return (
       <div className="hidden h-full flex-1 flex-col items-center justify-center bg-muted/30 p-8 md:flex">
-        <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-brand shadow-elegant">
-          <MessageCircle className="h-10 w-10 text-primary-foreground" />
-        </div>
+        <BrandLogo size={88} rounded="rounded-3xl" />
         <h2 className="mt-6 text-2xl font-bold">SSC 2k26 Chat</h2>
         <p className="mt-2 max-w-md text-center text-sm text-muted-foreground">
           Select a conversation to start messaging, or start a new chat with a batchmate.
@@ -378,9 +376,7 @@ export function ChatPane({ conversation, onBack }: Props) {
           </div>
         ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-brand shadow-elegant">
-              <MessageCircle className="h-8 w-8 text-primary-foreground" />
-            </div>
+            <BrandLogo size={72} rounded="rounded-2xl" />
             <p className="mt-4 text-sm text-muted-foreground">No messages yet — say hi 👋</p>
           </div>
         ) : (

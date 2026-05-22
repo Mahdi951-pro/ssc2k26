@@ -2,7 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Users, Shield, Sparkles, Bell, Zap, BarChart3 } from "lucide-react";
+import { Users, Shield, Sparkles, Bell, Zap, BarChart3 } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
 import { gsap } from "gsap";
 
 export const Route = createFileRoute("/")({
@@ -56,9 +57,7 @@ function Landing() {
       <header className="sticky top-0 z-40 glass-thin">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-brand shadow-elegant">
-              <MessageCircle className="h-5 w-5 text-primary-foreground" />
-            </div>
+            <BrandLogo size={36} rounded="rounded-xl" />
             <span className="text-lg font-bold tracking-tight">SSC 2k26 Chat</span>
           </Link>
           <Link to="/auth">
