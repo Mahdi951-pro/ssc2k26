@@ -32,8 +32,17 @@ export function NotificationPrompt() {
     const result = await Notification.requestPermission();
     setPermission(result);
     if (result === "granted") {
-      toast.success("Notifications enabled", { description: "You will see new message alerts." });
       const worker = await getWorker();
+      const ok = await subscribeUserToPush();
+      if (ok) {
+        toast.success("Mobile notifications enabled", {
+          description: "You'll get alerts even when the app is closed.",
+        });
+      } else {
+        toast.success("Notifications enabled", {
+          description: "You will see new message alerts.",
+        });
+      }
       await worker?.showNotification("SSC 2k26 notifications are ready", {
         body: "New messages will alert you here.",
         icon: "/icon-192.png",
