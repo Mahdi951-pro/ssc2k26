@@ -12,12 +12,12 @@ import {
   Megaphone,
   Users,
   Loader2,
-  MessageCircle,
   Lock,
   ImageIcon,
   MoreVertical,
   Search as SearchIcon,
 } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, formatDistanceToNowStrict, isSameDay } from "date-fns";

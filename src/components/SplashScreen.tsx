@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { BrandLogo } from "@/components/BrandLogo";
 
 /**
  * SSC'26 premium animated splash screen.
@@ -60,11 +61,7 @@ export function SplashScreen() {
         {/* Logo mark */}
         <div className="ssc-mark relative">
           <div className="absolute inset-0 -z-10 rounded-3xl bg-gradient-brand opacity-60 blur-2xl" />
-          <div className="glass-strong flex h-16 w-16 items-center justify-center rounded-3xl shadow-elegant sm:h-20 sm:w-20">
-            <span className="bg-gradient-brand bg-clip-text text-2xl font-black tracking-tight text-transparent sm:text-3xl">
-              S
-            </span>
-          </div>
+          <BrandLogo size={88} rounded="rounded-3xl" className="sm:!h-24 sm:!w-24" />
         </div>
 
         {/* Animated writing wordmark */}
