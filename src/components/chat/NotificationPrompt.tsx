@@ -2,16 +2,12 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Bell, BellOff, CheckCircle2, RefreshCw, Settings, X } from "lucide-react";
 import { toast } from "sonner";
+import { registerPushWorker, subscribeUserToPush, pushSupported } from "@/lib/pushNotifications";
 
 type PermissionState = NotificationPermission | "unsupported";
 
 async function getWorker() {
-  if (typeof window === "undefined" || !("serviceWorker" in navigator)) return null;
-  try {
-    return await navigator.serviceWorker.register("/notification-sw.js", { scope: "/" });
-  } catch {
-    return null;
-  }
+  return await registerPushWorker();
 }
 
 export function NotificationPrompt() {
@@ -36,8 +32,17 @@ export function NotificationPrompt() {
     const result = await Notification.requestPermission();
     setPermission(result);
     if (result === "granted") {
-      toast.success("Notifications enabled", { description: "You will see new message alerts." });
       const worker = await getWorker();
+      const ok = await subscribeUserToPush();
+      if (ok) {
+        toast.success("Mobile notifications enabled", {
+          description: "You'll get alerts even when the app is closed.",
+        });
+      } else {
+        toast.success("Notifications enabled", {
+          description: "You will see new message alerts.",
+        });
+      }
       await worker?.showNotification("SSC 2k26 notifications are ready", {
         body: "New messages will alert you here.",
         icon: "/icon-192.png",
