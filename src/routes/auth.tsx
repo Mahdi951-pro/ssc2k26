@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
 import { toast } from "sonner";
 import { gsap } from "gsap";
 
@@ -148,9 +149,7 @@ function AuthPage() {
     <div className="aurora relative flex min-h-[100dvh] items-center justify-center overflow-hidden bg-background px-4 py-10">
       <div ref={cardRef} className="relative z-10 w-full max-w-md">
         <Link to="/" data-anim className="mb-6 flex items-center justify-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-brand shadow-elegant">
-            <MessageCircle className="h-5 w-5 text-primary-foreground" />
-          </div>
+          <BrandLogo size={44} rounded="rounded-2xl" />
           <span className="text-xl font-bold tracking-tight">SSC 2k26 Chat</span>
         </Link>
 
