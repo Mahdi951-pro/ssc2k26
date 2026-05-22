@@ -2,16 +2,12 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Bell, BellOff, CheckCircle2, RefreshCw, Settings, X } from "lucide-react";
 import { toast } from "sonner";
+import { registerPushWorker, subscribeUserToPush, pushSupported } from "@/lib/pushNotifications";
 
 type PermissionState = NotificationPermission | "unsupported";
 
 async function getWorker() {
-  if (typeof window === "undefined" || !("serviceWorker" in navigator)) return null;
-  try {
-    return await navigator.serviceWorker.register("/notification-sw.js", { scope: "/" });
-  } catch {
-    return null;
-  }
+  return await registerPushWorker();
 }
 
 export function NotificationPrompt() {
