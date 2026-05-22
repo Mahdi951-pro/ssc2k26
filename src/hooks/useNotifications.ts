@@ -99,10 +99,13 @@ export function useNotifications({ userId, activeConversationId }: Options) {
     activeRef.current = activeConversationId ?? null;
   }, [activeConversationId]);
 
-  // Prepare a service worker so Android Chrome can show system notifications.
+  // Prepare a service worker + auto-subscribe to web push when permission already granted.
   useEffect(() => {
     if (!userId) return;
     getNotificationWorker();
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+      import("@/lib/pushNotifications").then((m) => m.subscribeUserToPush().catch(() => {}));
+    }
   }, [userId]);
 
   // Load memberships + conversations
